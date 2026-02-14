@@ -4,9 +4,9 @@ import './NotesPage.css'
 
 const FOLDER_ICONS = {
   'BEEE': '🔌',
-  'DET': '💻',
-  'AC': '📡',
-  'OOPs': '💾',
+  'DET': '📝',
+  'AC': '🧪',
+  'OOPs': '💻',
   'EG': '📐',
 }
 
@@ -20,8 +20,8 @@ const FOLDER_COLORS = {
 
 const FOLDER_FULL_NAMES = {
   'BEEE': 'Basic Electrical & Electronics',
-  'DET': 'Digital Electronics Technology',
-  'AC': 'Analog Circuits',
+  'DET': 'Differential Equations and Transformers',
+  'AC': 'Applied Chemistry',
   'OOPs': 'Object Oriented Programming',
   'EG': 'Engineering Graphics',
 }
