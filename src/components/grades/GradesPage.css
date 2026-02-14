@@ -1,0 +1,301 @@
+/* ===== Grades Page ===== */
+.grades-page {
+    padding-top: var(--space-5);
+}
+
+.grades-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+}
+
+.grades-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.back-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    transition: background var(--transition-fast);
+}
+
+.back-btn:hover {
+    background: var(--bg-input);
+}
+
+/* GPA Overview */
+.gpa-overview {
+    text-align: center;
+    padding: var(--space-6) var(--space-5);
+    margin-bottom: var(--space-6);
+}
+
+.gpa-card-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    margin-bottom: var(--space-4);
+    text-align: left;
+}
+
+.gpa-circle-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--space-4);
+}
+
+.gpa-circle {
+    display: block;
+}
+
+.gpa-progress {
+    transition: stroke-dashoffset 1s ease;
+}
+
+.gpa-label-text {
+    font-size: 11px;
+    fill: var(--text-secondary);
+    font-weight: 500;
+}
+
+.gpa-value-text {
+    font-size: 28px;
+    font-weight: 800;
+    fill: var(--text-primary);
+    letter-spacing: -0.03em;
+}
+
+.gpa-sub-text {
+    font-size: 9px;
+    fill: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.gpa-change {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--font-size-sm);
+    color: var(--success);
+    font-weight: 600;
+}
+
+.gpa-change-icon {
+    font-size: 16px;
+}
+
+/* Chart */
+.trend-chart {
+    padding: var(--space-4);
+    overflow: hidden;
+}
+
+.trend-svg {
+    width: 100%;
+    height: auto;
+}
+
+.chart-label {
+    font-size: 10px;
+    fill: var(--text-tertiary);
+    font-weight: 500;
+}
+
+/* Course Grid */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+}
+
+.course-card {
+    padding: var(--space-4);
+}
+
+.course-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-1);
+}
+
+.course-name {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.course-final-grade {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-3);
+}
+
+.course-final-grade strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* Bar Charts */
+.course-bars {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    gap: var(--space-2);
+    height: 80px;
+}
+
+.bar-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+}
+
+.bar-track {
+    width: 20px;
+    height: 50px;
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+.bar-fill {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    transition: height 0.6s ease;
+    min-height: 4px;
+}
+
+.bar-label {
+    font-size: 9px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.bar-value {
+    font-size: 9px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* ===== Entrance Animations ===== */
+
+/* GPA Ring - draws in */
+.gpa-progress {
+    stroke-dashoffset: 339.3 !important;
+    /* full circumference = hidden */
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grades-animated .gpa-progress {
+    stroke-dashoffset: var(--target-offset) !important;
+}
+
+/* GPA text values fade in */
+.gpa-value-text,
+.gpa-label-text,
+.gpa-sub-text {
+    opacity: 0;
+    transition: opacity 0.6s ease 0.4s;
+}
+
+.grades-animated .gpa-value-text,
+.grades-animated .gpa-label-text,
+.grades-animated .gpa-sub-text {
+    opacity: 1;
+}
+
+/* GPA change badge slides up */
+.gpa-change {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.5s ease 0.8s;
+}
+
+.grades-animated .gpa-change {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Performance Trend - line draws */
+.trend-svg polyline {
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    transition: stroke-dashoffset 1.5s ease 0.3s;
+}
+
+.grades-animated .trend-svg polyline {
+    stroke-dashoffset: 0;
+}
+
+.trend-svg polygon {
+    opacity: 0;
+    transition: opacity 0.8s ease 1s;
+}
+
+.grades-animated .trend-svg polygon {
+    opacity: 0.3;
+}
+
+.trend-svg circle {
+    opacity: 0;
+    transform-origin: center;
+    transition: opacity 0.4s ease;
+}
+
+.grades-animated .trend-svg circle {
+    opacity: 1;
+}
+
+/* Course cards slide up with stagger */
+.course-card {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grades-animated .course-card:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.2s;
+}
+
+.grades-animated .course-card:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.35s;
+}
+
+.grades-animated .course-card:nth-child(3) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.5s;
+}
+
+.grades-animated .course-card:nth-child(4) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.65s;
+}
+
+/* Bar fills animate */
+.bar-fill {
+    height: 0 !important;
+    transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s;
+}
+
+.grades-animated .bar-fill {
+    height: var(--bar-height) !important;
+}

@@ -1,0 +1,140 @@
+/* ===== App Layout ===== */
+.app {
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  background: var(--bg-base);
+}
+
+/* Glassmorphism wrapper for the main content area */
+.app-content {
+  padding-bottom: 88px;
+  /* Space for bottom nav */
+  min-height: 100vh;
+}
+
+/* ===== Page Shared Styles ===== */
+.page {
+  padding: var(--space-5);
+  padding-top: var(--space-6);
+  animation: pageIn 0.3s var(--transition-normal);
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.page-header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* ===== Card Component ===== */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== Button Styles ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  transition: all var(--transition-fast);
+  min-height: 48px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--text-inverse);
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: var(--space-10) var(--space-5);
+  font-size: var(--font-size-base);
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+  opacity: 0.6;
+}
+
+/* ===== Section Headers ===== */
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  letter-spacing: -0.01em;
+}
+
+/* ===== Badge / Tag ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.badge-primary {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+/* ===== Responsive Container ===== */
+@media (min-width: 431px) {
+  .app {
+    box-shadow: var(--shadow-lg);
+    border-radius: 0;
+  }
+}
