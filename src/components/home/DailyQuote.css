@@ -1,0 +1,82 @@
+.daily-quote-card {
+    background: linear-gradient(135deg, var(--bg-card), rgba(79, 70, 229, 0.05));
+    border: 1px solid var(--border);
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: var(--space-6);
+    /* Space below the quote */
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.daily-quote-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+}
+
+.daily-quote-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+}
+
+.quote-icon {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    opacity: 0.1;
+    transform: scale(2);
+}
+
+.quote-text {
+    font-size: var(--font-size-base);
+    /* Slightly larger text */
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: var(--space-3);
+    font-style: italic;
+    padding-right: var(--space-8);
+    /* Make room for icon */
+}
+
+.quote-author {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: right;
+    margin-top: var(--space-2);
+}
+
+.daily-quote-skeleton {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-bottom: var(--space-6);
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-3);
+}
+
+.skeleton-line {
+    height: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-full);
+}
+
+.width-80 {
+    width: 80%;
+}
+
+.width-40 {
+    width: 40%;
+    align-self: flex-end;
+}

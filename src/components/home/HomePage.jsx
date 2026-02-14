@@ -2,17 +2,22 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../hooks/useTheme'
 import { useAuth } from '../../context/AuthContext'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { getUpcomingClasses, SUBJECT_COLORS } from '../../data/scheduleData'
+import DailyQuote from './DailyQuote'
 import './HomePage.css'
 
-const CURRENT_GRADES = [
-    { subject: 'AC', grade: 'A-' },
-    { subject: 'DET', grade: 'B+' },
-    { subject: 'BEEE', grade: 'A' },
-    { subject: 'OOPS', grade: 'A-' },
-    { subject: 'EG', grade: 'B+' },
+const FALLBACK_GRADES = [
+    { subject: 'Calc', full: 'Calculus', grade: 'B+' },
+    { subject: 'Pro Comm', full: 'Professional Communication', grade: 'B' },
+    { subject: 'Pro Comm (P)', full: 'Professional Communication (P)', grade: 'B+' },
+    { subject: 'Prog Fund', full: 'Programming Fundamentals', grade: 'C+' },
+    { subject: 'Prog Fund (P)', full: 'Programming Fundamentals (P)', grade: 'B+' },
+    { subject: 'Quantum', full: 'Quantum Physics', grade: 'B' },
+    { subject: 'Quantum (P)', full: 'Quantum Physics (P)', grade: 'B+' },
+    { subject: 'UHV-II', full: 'Universal Human Values-II', grade: 'C+' },
+    { subject: 'Workshop', full: 'Workshop (P)', grade: 'A+' },
 ]
 
 function getGradeColor(grade) {
@@ -43,6 +48,25 @@ function HomePage() {
     })
 
     const displayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Student'
+
+    // Migration: Save default grades if user has none
+    useEffect(() => {
+        if (currentUser && (!currentUser.grades || currentUser.grades.length === 0)) {
+            const migrateGrades = async () => {
+                try {
+                    await setDoc(doc(db, 'users', currentUser.uid), {
+                        grades: FALLBACK_GRADES
+                    }, { merge: true })
+                    console.log('Migrated default grades to Firestore')
+                    // For immediate feedback, we can rely on next reload or manual state update
+                    // Ideally we'd update AuthContext state here but keeping it simple for now
+                } catch (err) {
+                    console.error('Migration failed:', err)
+                }
+            }
+            migrateGrades()
+        }
+    }, [currentUser])
 
     // Load quick notes from Firestore
     useEffect(() => {
@@ -177,6 +201,9 @@ function HomePage() {
                 </div>
             </header>
 
+            {/* Daily Quote */}
+            <DailyQuote />
+
             {/* Coming Up */}
             <section className="home-section">
                 <div className="section-header-row">
@@ -232,10 +259,12 @@ function HomePage() {
             <section className="home-section">
                 <h2 className="section-title">Current Grades</h2>
                 <div className="grades-quick-grid">
-                    {CURRENT_GRADES.map(item => (
-                        <div key={item.subject} className="grade-quick-card">
-                            <span className="grade-subject">{item.subject}:</span>
-                            <span className="grade-value" style={{ color: getGradeColor(item.grade) }}>{item.grade}</span>
+                    {(currentUser?.grades || FALLBACK_GRADES).map((item, index) => (
+                        <div key={index} className="grade-quick-card">
+                            <div className="grade-subject">{item.subject}</div>
+                            <div className="grade-value" style={{ color: getGradeColor(item.grade) }}>
+                                {item.grade}
+                            </div>
                         </div>
                     ))}
                 </div>

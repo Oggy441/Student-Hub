@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "firebase": "^12.9.0",
     "pdfjs-dist": "^5.4.624",
     "react": "^19.2.0",

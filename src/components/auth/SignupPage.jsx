@@ -5,6 +5,7 @@ import './Auth.css'
 
 function SignupPage() {
     const [name, setName] = useState('')
+    const [rollNo, setRollNo] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -23,7 +24,7 @@ function SignupPage() {
         try {
             setError('')
             setLoading(true)
-            await signup(email, password, name)
+            await signup(email, password, name, rollNo)
             navigate('/')
         } catch (err) {
             console.error('Signup error:', err)
@@ -60,6 +61,18 @@ function SignupPage() {
                             onChange={(e) => setName(e.target.value)}
                             required
                             placeholder="Enter your full name"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="rollNo">Roll Number</label>
+                        <input
+                            type="text"
+                            id="rollNo"
+                            value={rollNo}
+                            onChange={(e) => setRollNo(e.target.value)}
+                            required
+                            placeholder="Enter your roll number"
                         />
                     </div>
 

@@ -10,6 +10,7 @@ function SettingsPage() {
     const navigate = useNavigate()
 
     const [name, setName] = useState(currentUser?.displayName || '')
+    const [rollNo, setRollNo] = useState(currentUser?.rollNo || '')
     const [email, setEmail] = useState(currentUser?.email || '')
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
@@ -27,6 +28,9 @@ function SettingsPage() {
             }
             if (email !== currentUser.email) {
                 await updateUserEmail(email)
+            }
+            if (rollNo && rollNo !== currentUser.rollNo) {
+                await updateUserProfile({ rollNo })
             }
 
             setMessage('Profile updated successfully!')
@@ -96,10 +100,26 @@ function SettingsPage() {
                                 placeholder="Your email"
                             />
                         </div>
+                        <div className="form-group">
+                            <label htmlFor="settings-rollno">Roll Number</label>
+                            <input
+                                type="text"
+                                id="settings-rollno"
+                                value={rollNo}
+                                onChange={(e) => setRollNo(e.target.value)}
+                                placeholder="Enter your roll number"
+                                disabled={!!currentUser?.rollNo}
+                                title={currentUser?.rollNo ? "Contact admin to change roll number" : "Set your roll number"}
+                            />
+                        </div>
                         <button
                             className="btn btn-primary btn-full"
                             type="submit"
-                            disabled={saving || (name === currentUser?.displayName && email === currentUser?.email)}
+                            disabled={saving || (
+                                name === currentUser?.displayName &&
+                                email === currentUser?.email &&
+                                rollNo === (currentUser?.rollNo || '')
+                            )}
                         >
                             {saving ? 'Saving...' : 'Save Changes'}
                         </button>
