@@ -1,59 +1,8 @@
 import { useState, useMemo } from 'react'
+import { SCHEDULE, SUBJECT_COLORS } from '../../data/scheduleData'
 import './SchedulePage.css'
 
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
-
-const SUBJECT_COLORS = {
-    'AC': '#3b82f6',
-    'DET': '#8b5cf6',
-    'BEEE': '#f59e0b',
-    'OOPS': '#10b981',
-    'EG': '#6366f1',
-    'BEEE Lab': '#f59e0b',
-    'OOPS Lab': '#10b981',
-    'AC Lab': '#3b82f6',
-    'EG Lab': '#6366f1',
-}
-
-// group: null = all groups (lectures), 1/2/3 = specific group lab
-const SCHEDULE = {
-    0: [ // Monday
-        { subject: 'AC', topic: 'Applied Chemistry', time: '9:30 - 10:30 AM', room: 'Room L-3', professor: 'Ms. Neha', type: 'L', group: null },
-        { subject: 'BEEE Lab', topic: 'BEEE Lab', time: '10:30 AM - 12:30 PM', room: 'Lab No. 105', professor: 'Dr. Parvinder Kaur', type: 'P', group: 2 },
-        { subject: 'OOPS Lab', topic: 'OOPS Lab', time: '10:30 AM - 12:30 PM', room: 'CL1', professor: '', type: 'P', group: 3 },
-        { subject: 'AC Lab', topic: 'AC Lab', time: '10:30 AM - 12:30 PM', room: 'Lab No. 104', professor: 'Ms. Neha', type: 'P', group: 1 },
-        { subject: 'DET', topic: 'Differential Eq. & Transforms', time: '3:30 - 5:30 PM', room: 'Room L-3', professor: 'Dr. Tejinder Kumar', type: 'L', group: null },
-    ],
-    1: [ // Tuesday
-        { subject: 'AC', topic: 'Applied Chemistry', time: '9:30 - 10:30 AM', room: 'Room L-3', professor: 'Ms. Neha', type: 'L', group: null },
-        { subject: 'DET', topic: 'Differential Eq. & Transforms', time: '10:30 AM - 12:30 PM', room: 'Room L-3', professor: 'Dr. Tejinder Kumar', type: 'L', group: null },
-        { subject: 'BEEE', topic: 'Basic Electrical & Electronics', time: '12:30 - 1:30 PM', room: 'Room L-3', professor: 'Dr. Parvinder Kaur', type: 'L', group: null },
-        { subject: 'EG Lab', topic: 'EG Lab', time: '2:30 - 4:30 PM', room: 'Lab No. 409', professor: 'Mr. Harsh Dassal', type: 'P', group: 2 },
-    ],
-    2: [ // Wednesday
-        { subject: 'AC', topic: 'Applied Chemistry', time: '9:30 - 10:30 AM', room: 'Room L-3', professor: 'Ms. Neha', type: 'L', group: null },
-        { subject: 'BEEE', topic: 'Basic Electrical & Electronics', time: '10:30 - 11:30 AM', room: 'Room L-3', professor: 'Dr. Parvinder Kaur', type: 'L', group: null },
-        { subject: 'EG', topic: 'Engineering Graphics', time: '11:30 AM - 12:30 PM', room: 'Room L-3', professor: 'Mr. Harsh Dassal', type: 'L', group: null },
-        { subject: 'OOPS', topic: 'Object Oriented Programming', time: '1:30 - 2:30 PM', room: 'Room L-3', professor: '', type: 'L', group: null },
-        { subject: 'DET', topic: 'DET Tutorial', time: '2:30 - 3:30 PM', room: 'Room L-3', professor: 'Dr. Tejinder Kumar', type: 'T', group: null },
-        { subject: 'AC Lab', topic: 'AC Lab', time: '3:30 - 5:30 PM', room: 'Lab No. 104', professor: 'Ms. Neha', type: 'P', group: 3 },
-    ],
-    3: [ // Thursday
-        { subject: 'OOPS', topic: 'Object Oriented Programming', time: '9:30 - 10:30 AM', room: 'Room L-3', professor: '', type: 'L', group: null },
-        { subject: 'AC', topic: 'Applied Chemistry', time: '10:30 - 11:30 AM', room: 'Room L-3', professor: 'Ms. Neha', type: 'L', group: null },
-        { subject: 'OOPS', topic: 'Object Oriented Programming', time: '11:30 AM - 12:30 PM', room: 'Room L-3', professor: '', type: 'L', group: null },
-        { subject: 'BEEE', topic: 'Basic Electrical & Electronics', time: '12:30 - 1:30 PM', room: 'Room L-3', professor: 'Dr. Parvinder Kaur', type: 'L', group: null },
-        { subject: 'EG Lab', topic: 'EG Lab', time: '2:30 - 4:30 PM', room: 'Lab No. 409', professor: 'Mr. Harsh Dassal', type: 'P', group: 1 },
-        { subject: 'BEEE Lab', topic: 'BEEE Lab', time: '3:30 - 5:30 PM', room: 'Lab No. 105', professor: 'Dr. Parvinder Kaur', type: 'P', group: 1 },
-    ],
-    4: [ // Friday
-        { subject: 'AC Lab', topic: 'AC Lab', time: '9:30 - 11:30 AM', room: 'Lab No. 104', professor: 'Ms. Neha', type: 'P', group: 2 },
-        { subject: 'BEEE Lab', topic: 'BEEE Lab', time: '10:30 AM - 12:30 PM', room: 'Lab No. 105', professor: 'Dr. Parvinder Kaur', type: 'P', group: 3 },
-        { subject: 'OOPS Lab', topic: 'OOPS Lab', time: '12:30 - 2:30 PM', room: 'CL1', professor: '', type: 'P', group: 1 },
-        { subject: 'EG Lab', topic: 'EG Lab', time: '3:30 - 5:30 PM', room: 'Lab No. 409', professor: 'Mr. Harsh Dassal', type: 'P', group: 3 },
-        { subject: 'OOPS Lab', topic: 'OOPS Lab', time: '3:30 - 5:30 PM', room: 'CL1', professor: '', type: 'P', group: 2 },
-    ],
-}
 
 function getVisibleDays() {
     const now = new Date()
@@ -103,7 +52,6 @@ function SchedulePage() {
     const currentDay = visibleDays[selectedTab]
     const isToday = currentDay.date.toDateString() === new Date().toDateString()
 
-    // Filter: show lectures (group=null) + only selected group's labs
     const filteredClasses = (SCHEDULE[currentDay.scheduleIndex] || []).filter(
         cls => cls.group === null || cls.group === selectedGroup
     )
@@ -115,7 +63,6 @@ function SchedulePage() {
                 <span className="schedule-sem-badge">CSE · Sem 2</span>
             </header>
 
-            {/* Day Selector */}
             <div className="date-picker-container">
                 <div className="day-selector">
                     {visibleDays.map((day, index) => {
@@ -138,7 +85,6 @@ function SchedulePage() {
                 {isToday ? '📍 Today · ' : ''}{formatDateFull(currentDay.date)}
             </p>
 
-            {/* Classes Header with Group Dropdown */}
             <div className="classes-section">
                 <div className="classes-header">
                     <span className="classes-tab active">
@@ -181,7 +127,6 @@ function SchedulePage() {
                     </div>
                 </div>
 
-                {/* Class Cards */}
                 <div className="class-cards">
                     {filteredClasses.map((cls, i) => {
                         const color = SUBJECT_COLORS[cls.subject] || '#6b7280'

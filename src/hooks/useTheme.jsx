@@ -10,8 +10,15 @@ export function ThemeProvider({ children }) {
     })
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+        const root = document.documentElement
+        root.setAttribute('data-theme', isDark ? 'dark' : 'light')
         localStorage.setItem('studyhub-theme', isDark ? 'dark' : 'light')
+
+        // Update meta theme-color for Android status bar
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', isDark ? '#0f1117' : '#f0f2f8')
+        }
     }, [isDark])
 
     const toggleTheme = () => setIsDark(prev => !prev)

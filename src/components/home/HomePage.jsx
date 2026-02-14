@@ -1,23 +1,27 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../hooks/useTheme'
 import { useAuth } from '../../context/AuthContext'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
+import { getUpcomingClasses, SUBJECT_COLORS } from '../../data/scheduleData'
 import './HomePage.css'
 
-const UPCOMING_ITEMS = [
-    { id: 1, title: 'Physics Midterm', date: 'Tomorrow, 10 AM', color: '#ef4444' },
-    { id: 2, title: 'CS Project Due', date: 'Fri, 11:59 PM', color: '#f59e0b' },
-    { id: 3, title: 'Study Group', date: 'Sat, 2 PM', color: '#3b82f6' },
-    { id: 4, title: 'Math Quiz', date: 'Mon, 9 AM', color: '#10b981' },
+const CURRENT_GRADES = [
+    { subject: 'AC', grade: 'A-' },
+    { subject: 'DET', grade: 'B+' },
+    { subject: 'BEEE', grade: 'A' },
+    { subject: 'OOPS', grade: 'A-' },
+    { subject: 'EG', grade: 'B+' },
 ]
 
-const CURRENT_GRADES = [
-    { subject: 'Calculus', grade: 'A-' },
-    { subject: 'Physics', grade: 'B+' },
-    { subject: 'Comp Sci', grade: 'A' },
-]
+function getGradeColor(grade) {
+    const letter = grade.charAt(0).toUpperCase()
+    if (letter === 'A') return '#10b981' // green
+    if (letter === 'B') return '#6366f1' // indigo
+    if (letter === 'C') return '#f59e0b' // amber
+    return '#ef4444' // red for D/F
+}
 
 function HomePage() {
     const { isDark, toggleTheme } = useTheme()
@@ -26,7 +30,10 @@ function HomePage() {
     const [showDropdown, setShowDropdown] = useState(false)
     const [quickNotes, setQuickNotes] = useState([])
     const [newNote, setNewNote] = useState('')
+    const [selectedGroup, setSelectedGroup] = useState(1)
+    const [groupOpen, setGroupOpen] = useState(false)
     const dropdownRef = useRef(null)
+    const groupRef = useRef(null)
 
     const [greeting] = useState(() => {
         const hour = new Date().getHours()
@@ -172,13 +179,50 @@ function HomePage() {
 
             {/* Coming Up */}
             <section className="home-section">
-                <h2 className="section-title">Coming Up</h2>
+                <div className="section-header-row">
+                    <h2 className="section-title">Coming Up</h2>
+                    <div className="group-selector-wrapper" ref={groupRef}>
+                        <button
+                            className="group-selector-btn"
+                            onClick={() => setGroupOpen(!groupOpen)}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            G-{selectedGroup}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`group-chevron ${groupOpen ? 'open' : ''}`}>
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        {groupOpen && (
+                            <div className="group-dropdown">
+                                {[1, 2, 3].map(g => (
+                                    <button
+                                        key={g}
+                                        className={`group-option ${selectedGroup === g ? 'active' : ''}`}
+                                        onClick={() => { setSelectedGroup(g); setGroupOpen(false) }}
+                                    >
+                                        Group {g}
+                                        {selectedGroup === g && (
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
                 <div className="upcoming-scroll">
-                    {UPCOMING_ITEMS.map(item => (
-                        <div key={item.id} className="upcoming-card">
-                            <div className="upcoming-accent" style={{ background: item.color }} />
-                            <h3 className="upcoming-title">{item.title}</h3>
-                            <p className="upcoming-date">{item.date}</p>
+                    {getUpcomingClasses(selectedGroup, 4).map((cls, i) => (
+                        <div key={i} className="upcoming-card">
+                            <div className="upcoming-accent" style={{ background: SUBJECT_COLORS[cls.subject] || '#6b7280' }} />
+                            <h3 className="upcoming-title">{cls.topic}</h3>
+                            <p className="upcoming-date">{cls.dayLabel}, {cls.time}</p>
                         </div>
                     ))}
                 </div>
@@ -191,7 +235,7 @@ function HomePage() {
                     {CURRENT_GRADES.map(item => (
                         <div key={item.subject} className="grade-quick-card">
                             <span className="grade-subject">{item.subject}:</span>
-                            <span className="grade-value">{item.grade}</span>
+                            <span className="grade-value" style={{ color: getGradeColor(item.grade) }}>{item.grade}</span>
                         </div>
                     ))}
                 </div>
