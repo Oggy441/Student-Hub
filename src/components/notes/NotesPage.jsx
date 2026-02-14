@@ -1,53 +1,45 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../../context/AuthContext'
-import { getUserNotes, deleteNote } from '../../services/notesService'
-import UploadModal from './UploadModal'
-import NoteViewer from './NoteViewer'
+import { getAllNotes } from '../../services/notesService'
 import './NotesPage.css'
 
 const FOLDER_ICONS = {
-  'Mathematics': '📐',
-  'Physics': '⚡',
-  'Chemistry': '🧪',
-  'Biology': '🧬',
-  'Computer Science': '💻',
-  'History': '📜',
-  'English': '📖',
-  'Economics': '📈',
-  'My Notes': '📝',
+  'BEEE': '🔌',
+  'DET': '💻',
+  'AC': '📡',
+  'OOPs': '💾',
+  'EG': '📐',
 }
 
 const FOLDER_COLORS = {
-  'Mathematics': '#f59e0b',
-  'Physics': '#3b82f6',
-  'Chemistry': '#10b981',
-  'Biology': '#8b5cf6',
-  'Computer Science': '#6366f1',
-  'History': '#ef4444',
-  'English': '#ec4899',
-  'Economics': '#14b8a6',
-  'My Notes': '#6b7280',
+  'BEEE': '#f59e0b',
+  'DET': '#3b82f6',
+  'AC': '#10b981',
+  'OOPs': '#8b5cf6',
+  'EG': '#6366f1',
+}
+
+const FOLDER_FULL_NAMES = {
+  'BEEE': 'Basic Electrical & Electronics',
+  'DET': 'Digital Electronics Technology',
+  'AC': 'Analog Circuits',
+  'OOPs': 'Object Oriented Programming',
+  'EG': 'Engineering Graphics',
 }
 
 function NotesPage() {
-  const { currentUser } = useAuth()
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showUpload, setShowUpload] = useState(false)
-  const [selectedNote, setSelectedNote] = useState(null)
   const [activeFolder, setActiveFolder] = useState(null)
 
   useEffect(() => {
-    if (currentUser) {
-      loadNotes()
-    }
-  }, [currentUser])
+    loadNotes()
+  }, [])
 
   async function loadNotes() {
     try {
       setLoading(true)
-      const userNotes = await getUserNotes(currentUser.uid)
-      setNotes(userNotes)
+      const allNotes = await getAllNotes()
+      setNotes(allNotes)
     } catch (err) {
       console.error('Error loading notes:', err)
     } finally {
@@ -55,45 +47,37 @@ function NotesPage() {
     }
   }
 
-  function handleNoteAdded() {
-    loadNotes()
-  }
-
-  async function handleDelete(e, noteId) {
-    e.stopPropagation()
-    if (window.confirm('Delete this note?')) {
-      await deleteNote(noteId)
-      setNotes(notes.filter(n => n.id !== noteId))
-    }
-  }
-
-  // Group notes by folder
+  // Group notes by subject
   function getFolders() {
     const folderMap = {}
-    notes.forEach(note => {
-      const folder = note.folder || 'My Notes'
-      if (!folderMap[folder]) {
-        folderMap[folder] = []
-      }
-      folderMap[folder].push(note)
+
+    // Initialize all known subjects
+    Object.keys(FOLDER_ICONS).forEach(subject => {
+      folderMap[subject] = []
     })
 
-    // Always show 'My Notes' even if empty
-    if (!folderMap['My Notes']) {
-      folderMap['My Notes'] = []
-    }
+    // Sort notes into subjects
+    notes.forEach(note => {
+      const subject = note.subject || 'BEEE'
+      if (!folderMap[subject]) {
+        folderMap[subject] = []
+      }
+      folderMap[subject].push(note)
+    })
 
     return folderMap
   }
 
-  // If viewing a specific note
-  if (selectedNote) {
-    return <NoteViewer note={selectedNote} onBack={() => setSelectedNote(null)} />
+  function formatFileSize(bytes) {
+    if (!bytes) return ''
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / 1048576).toFixed(1) + ' MB'
   }
 
   const folders = getFolders()
 
-  // If inside a folder
+  // Inside a subject folder
   if (activeFolder) {
     const folderNotes = folders[activeFolder] || []
     return (
@@ -106,22 +90,16 @@ function NotesPage() {
             </svg>
           </button>
           <h1>{FOLDER_ICONS[activeFolder] || '📁'} {activeFolder}</h1>
-          <button className="btn btn-primary upload-btn-sm" onClick={() => setShowUpload(true)}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </button>
+          <div style={{ width: 36 }} />
         </header>
+
+        <p className="folder-full-name">{FOLDER_FULL_NAMES[activeFolder] || ''}</p>
 
         <div className="page-content">
           {folderNotes.length === 0 ? (
             <div className="empty-state-box">
-              <h3>No notes in this folder</h3>
-              <p>Upload a PDF and assign it to this folder</p>
-              <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
-                Upload Note
-              </button>
+              <h3>No notes yet</h3>
+              <p>Notes for this subject will appear here once uploaded by admin.</p>
             </div>
           ) : (
             <div className="notes-list">
@@ -135,30 +113,52 @@ function NotesPage() {
                   </div>
                   <div className="note-list-info">
                     <span className="note-list-title">{note.title}</span>
-                    <span className="note-list-date">
-                      {note.createdAt?.seconds
-                        ? new Date(note.createdAt.seconds * 1000).toLocaleDateString()
-                        : 'Just now'}
+                    <span className="note-list-meta">
+                      {formatFileSize(note.fileSize)}
+                      {note.uploadedAt?.seconds && (
+                        <> · {new Date(note.uploadedAt.seconds * 1000).toLocaleDateString()}</>
+                      )}
                     </span>
                   </div>
-                  <button className="note-list-delete" onClick={() => handleDelete({ stopPropagation: () => { } }, note.id)}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    </svg>
-                  </button>
+                  <div className="note-list-actions">
+                    {note.driveViewUrl && (
+                      <a
+                        href={note.driveViewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="note-action-btn view-btn"
+                        title="View"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </a>
+                    )}
+                    {note.driveDownloadUrl && (
+                      <a
+                        href={note.driveDownloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="note-action-btn download-btn"
+                        title="Download"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                      </a>
+                    )}
+                    {!note.driveViewUrl && !note.driveDownloadUrl && (
+                      <span className="note-pending">Pending</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-
-        <UploadModal
-          isOpen={showUpload}
-          onClose={() => setShowUpload(false)}
-          onNoteAdded={handleNoteAdded}
-          defaultFolder={activeFolder}
-        />
       </div>
     )
   }
@@ -167,14 +167,7 @@ function NotesPage() {
   return (
     <div className="page notes-page">
       <header className="notes-header">
-        <h1>📚 My Notes</h1>
-        <button className="btn btn-primary upload-btn" onClick={() => setShowUpload(true)}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Upload
-        </button>
+        <h1>📚 Notes</h1>
       </header>
 
       <div className="page-content">
@@ -200,6 +193,7 @@ function NotesPage() {
                   </span>
                 </div>
                 <h3 className="folder-name">{folderName}</h3>
+                <p className="folder-full-label">{FOLDER_FULL_NAMES[folderName] || ''}</p>
                 <p className="folder-count">
                   {folderNotes.length} {folderNotes.length === 1 ? 'note' : 'notes'}
                 </p>
@@ -208,12 +202,6 @@ function NotesPage() {
           </div>
         )}
       </div>
-
-      <UploadModal
-        isOpen={showUpload}
-        onClose={() => setShowUpload(false)}
-        onNoteAdded={handleNoteAdded}
-      />
     </div>
   )
 }

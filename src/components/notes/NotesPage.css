@@ -134,6 +134,74 @@
   color: var(--text-tertiary);
 }
 
+.folder-full-label {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.folder-full-name {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: calc(-1 * var(--space-4));
+  margin-bottom: var(--space-4);
+}
+
+/* Note list meta (file size + date) */
+.note-list-meta {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+/* Note action buttons */
+.note-list-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.note-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.view-btn {
+  color: var(--primary);
+  background: var(--primary-bg);
+}
+
+.view-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.download-btn {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.download-btn:hover {
+  background: #10b981;
+  color: white;
+}
+
+.note-pending {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  background: var(--bg-input);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
 /* Back button inside folder view */
 .back-btn-notes {
   width: 36px;
