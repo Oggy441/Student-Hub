@@ -15,18 +15,23 @@ function DailyQuote() {
 
                 if (cached) {
                     const parsed = JSON.parse(cached)
-                    if (parsed.date === today) {
+                    // Check if it's a valid quote (not an error fallback) and same date
+                    if (parsed.date === today && parsed.text && !parsed.error) {
                         setQuote(parsed)
                         setLoading(false)
                         return
                     }
                 }
 
+                console.log('Fetching fresh quote from API...')
                 const data = await getDailyQuote()
+                console.log('Quote received:', data)
                 setQuote(data)
 
-                // Cache for session
-                localStorage.setItem('daily_quote', JSON.stringify({ ...data, date: today }))
+                // Cache for session (only if valid)
+                if (data.text && !data.error) {
+                    localStorage.setItem('daily_quote', JSON.stringify({ ...data, date: today }))
+                }
             } catch (err) {
                 console.error('Failed to load quote', err)
             } finally {

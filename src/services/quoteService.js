@@ -41,20 +41,22 @@ export const getDailyQuote = async () => {
 
         const quoteData = await response.json()
 
-        // Save to Firestore
-        await setDoc(quoteRef, {
-            ...quoteData,
-            date: today,
-            createdAt: new Date().toISOString()
-        })
+        // Save to Firestore only if valid
+        if (quoteData.text && !quoteData.error) {
+            await setDoc(quoteRef, {
+                ...quoteData,
+                date: today,
+                createdAt: new Date().toISOString()
+            })
+        }
 
         return quoteData
 
     } catch (error) {
         console.error('Error fetching/generating quote:', error)
-        // Return random fallback with error info for debugging
+        // Return random fallback - don't include error info
         const fallback = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)]
         console.log('Using fallback quote due to error:', error.message)
-        return { ...fallback, error: error.message }
+        return fallback
     }
 }
