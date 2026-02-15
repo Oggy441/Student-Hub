@@ -1,6 +1,5 @@
 import { db } from './firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 
 // Fallback quotes in case API fails or key is missing
 const FALLBACK_QUOTES = [
@@ -32,30 +31,15 @@ export const getDailyQuote = async () => {
             return quoteSnap.data()
         }
 
-        // Check for API Key
-        const API_KEY = import.meta.env.VITE_GOOGLE_AI_KEY
-        if (!API_KEY) {
-            console.warn('Google AI API Key not found. Using fallback quote.')
-            return FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)]
+        // Call Secure Backend API
+        console.log('Generating new quote via secure backend...')
+        const response = await fetch('/api/generate-quote')
+
+        if (!response.ok) {
+            throw new Error(`Failed to generate quote: ${response.status}`)
         }
 
-        // If not found, generate a new one
-        console.log('Generating new quote with Google AI...')
-        const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        const prompt = `Generate a short, humorous, witty, and motivational quote specifically for a Computer Science student.
-        It should be relatable to coders (bugs, coffee, deployment, etc.).
-        Return ONLY a JSON object with two fields: "text" (the quote string) and "author" (the person who said it, or "Unknown" if generic). 
-        Do not use markdown formatting.`
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        // Clean up markdown if present
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim()
-        const quoteData = JSON.parse(jsonStr)
+        const quoteData = await response.json()
 
         // Save to Firestore
         await setDoc(quoteRef, {
