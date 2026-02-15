@@ -52,7 +52,9 @@ export const getDailyQuote = async () => {
 
     } catch (error) {
         console.error('Error fetching/generating quote:', error)
-        // Return random fallback
-        return FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)]
+        // Return random fallback with error info for debugging
+        const fallback = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)]
+        console.log('Using fallback quote due to error:', error.message)
+        return { ...fallback, error: error.message }
     }
 }
