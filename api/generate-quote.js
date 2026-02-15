@@ -24,13 +24,28 @@ export default async function handler(req, res) {
         const response = await result.response;
         const text = response.text();
 
-        // Clean up markdown if present
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim()
-        const quoteData = JSON.parse(jsonStr)
+        // More robust JSON extraction
+        let jsonStr = text;
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            jsonStr = jsonMatch[0];
+        }
 
-        return res.status(200).json(quoteData)
+        try {
+            const quoteData = JSON.parse(jsonStr);
+            return res.status(200).json(quoteData);
+        } catch (parseError) {
+            console.error('JSON Parse Error. Raw text:', text);
+            return res.status(500).json({
+                error: 'Invalid response format from AI',
+                details: text.substring(0, 100)
+            });
+        }
     } catch (error) {
-        console.error('API Error:', error)
-        return res.status(500).json({ error: 'Failed to generate quote' })
+        console.error('Gemini API Error:', error);
+        return res.status(500).json({
+            error: 'Failed to generate quote',
+            message: error.message
+        });
     }
 }
