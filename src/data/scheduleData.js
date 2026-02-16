@@ -104,32 +104,14 @@ export function getUpcomingClasses(selectedGroup = 1, limit = 4) {
         cls => cls.group === null || cls.group === selectedGroup
     )
 
-    // Parse start time to filter out past classes
-    const upcoming = todayAll.filter(cls => {
-        const match = cls.time.match(/^(\d{1,2}):(\d{2})\s*(-|–)/)
-        if (!match) return true
-        let hour = parseInt(match[1])
-        const min = parseInt(match[2])
-        // If time string contains PM and hour < 12, add 12
-        if (cls.time.includes('PM') && hour < 12) hour += 12
-        if (cls.time.includes('AM') && hour === 12) hour = 0
-        return hour > currentHour || (hour === currentHour && min > currentMinute)
-    })
+    // Filter out past classes - REMOVED to show full day schedule
+    // const upcoming = todayAll.filter(cls => { ... })
 
-    const result = upcoming.map(cls => ({ ...cls, dayLabel: 'Today' }))
+    // Return all classes for today
+    const result = todayAll.map(cls => ({ ...cls, dayLabel: 'Today' }))
 
-    // If we need more, grab from the next weekday
-    if (result.length < limit) {
-        const nextDayIndex = scheduleIndex === 4 ? 0 : scheduleIndex + 1
-        const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-        const nextDayClasses = (SCHEDULE[nextDayIndex] || []).filter(
-            cls => cls.group === null || cls.group === selectedGroup
-        )
-        const remaining = limit - result.length
-        nextDayClasses.slice(0, remaining).forEach(cls => {
-            result.push({ ...cls, dayLabel: DAY_LABELS[nextDayIndex] })
-        })
-    }
+    // REMOVED: Logic to fetch next day's classes to fill the limit.
+    // User requested to show ONLY current day's schedule.
 
     return result.slice(0, limit)
 }

@@ -5,76 +5,92 @@ import { collection, addDoc, getDocs, query, where, Timestamp } from 'firebase/f
 // Initialize the API with the key from environment variables
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
+// Singleton promise to prevent double-fetching in React StrictMode
+let currentFetchPromise = null;
+
 export const getDailyQuote = async () => {
-    // 1. Check Firestore for today's quote
-    const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-
-    try {
-        const quotesRef = collection(db, 'daily_quotes');
-        const q = query(quotesRef, where('date', '==', todayStr));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-            // Found a quote for today in Firestore
-            const docData = querySnapshot.docs[0].data();
-            console.log('QuoteService: Retrieved quote from Firestore for date:', todayStr);
-            return {
-                text: docData.text,
-                author: docData.author
-            };
-        }
-    } catch (firestoreError) {
-        console.error("QuoteService: Error checking Firestore:", firestoreError);
-        // Continue to API fallback if Firestore fails, don't break the app
+    // If a request is already in progress, return the existing promise
+    if (currentFetchPromise) {
+        return currentFetchPromise;
     }
 
-    // 2. If no quote in Firestore (or error), fetch from Gemini API
-    console.log('QuoteService: No quote in Firestore for today. Fetching from API...');
+    currentFetchPromise = (async () => {
+        // 1. Check Firestore for today's quote
+        const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-    // Debugging: Check if API Key is present
-    if (!API_KEY) {
-        console.warn('QuoteService: VITE_GEMINI_API_KEY is missing in .env');
-        return getFallbackQuote();
-    }
-
-    try {
-        // Use the Web-compatible SDK
-        const genAI = new GoogleGenerativeAI(API_KEY);
-        // Use the standard free model (v1beta) - trying gemini-pro/flash
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-        console.log('QuoteService: Requesting quote from model: gemini-1.5-flash');
-
-        const result = await model.generateContent(
-            `Write a short, funny, and motivational quote for engineering students about coding, bugs, or studying. strictly return valid JSON format: { "text": "...", "author": "..." }`
-        );
-
-        const response = await result.response;
-        const text = response.text();
-        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const data = JSON.parse(cleanText);
-
-        // 3. Save the new quote to Firestore
         try {
-            await addDoc(collection(db, 'daily_quotes'), {
-                text: data.text,
-                author: data.author,
-                date: todayStr,
-                createdAt: Timestamp.now()
-            });
-            console.log('QuoteService: Saved new quote to Firestore');
-        } catch (saveError) {
-            console.error("QuoteService: Failed to save quote to Firestore:", saveError);
+            const quotesRef = collection(db, 'daily_quotes');
+            const q = query(quotesRef, where('date', '==', todayStr));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                // Found a quote for today in Firestore
+                const docData = querySnapshot.docs[0].data();
+                console.log('QuoteService: Retrieved quote from Firestore for date:', todayStr);
+                return {
+                    text: docData.text,
+                    author: docData.author
+                };
+            }
+        } catch (firestoreError) {
+            console.error("QuoteService: Error checking Firestore:", firestoreError);
+            // Continue to API fallback if Firestore fails, don't break the app
         }
 
-        return {
-            text: data.text,
-            author: data.author
-        };
+        // 2. If no quote in Firestore (or error), fetch from Gemini API
+        console.log('QuoteService: No quote in Firestore for today. Fetching from API...');
 
-    } catch (error) {
-        console.error("QuoteService Error:", error);
-        return getFallbackQuote(error.message);
+        // Debugging: Check if API Key is present
+        if (!API_KEY) {
+            console.warn('QuoteService: VITE_GEMINI_API_KEY is missing in .env');
+            return getFallbackQuote();
+        }
+
+        try {
+            // Use the Web-compatible SDK
+            const genAI = new GoogleGenerativeAI(API_KEY);
+            // Use the standard free model (v1beta) - trying gemini-pro/flash
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+            console.log('QuoteService: Requesting quote from model: gemini-2.5-flash');
+
+            const result = await model.generateContent(
+                `Write a short, funny, and motivational quote (max 4 lines) for engineering students about coding, bugs, or studying. strictly return valid JSON format: { "text": "...", "author": "..." }`
+            );
+
+            const response = await result.response;
+            const text = response.text();
+            const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const data = JSON.parse(cleanText);
+
+            // 3. Save the new quote to Firestore
+            try {
+                await addDoc(collection(db, 'daily_quotes'), {
+                    text: data.text,
+                    author: data.author,
+                    date: todayStr,
+                    createdAt: Timestamp.now()
+                });
+                console.log('QuoteService: Saved new quote to Firestore');
+            } catch (saveError) {
+                console.error("QuoteService: Failed to save quote to Firestore:", saveError);
+            }
+
+            return {
+                text: data.text,
+                author: data.author
+            };
+
+        } catch (error) {
+            console.error("QuoteService Error:", error);
+            return getFallbackQuote(error.message);
+        }
+    })();
+
+    try {
+        return await currentFetchPromise;
+    } finally {
+        currentFetchPromise = null; // Reset after completion so we can fetch again tomorrow/later
     }
 };
 
