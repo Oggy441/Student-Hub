@@ -9,29 +9,8 @@ function DailyQuote() {
     useEffect(() => {
         const fetchQuote = async () => {
             try {
-                // Check if we have today's quote in local storage to avoid extra reads
-                const today = new Date().toISOString().split('T')[0]
-                const cached = localStorage.getItem('daily_quote')
-
-                if (cached) {
-                    const parsed = JSON.parse(cached)
-                    // Check if it's a valid quote (not an error fallback) and same date
-                    if (parsed.date === today && parsed.text && !parsed.error) {
-                        setQuote(parsed)
-                        setLoading(false)
-                        return
-                    }
-                }
-
-                console.log('Fetching fresh quote from API...')
                 const data = await getDailyQuote()
-                console.log('Quote received:', data)
                 setQuote(data)
-
-                // Cache for session (only if valid)
-                if (data.text && !data.error) {
-                    localStorage.setItem('daily_quote', JSON.stringify({ ...data, date: today }))
-                }
             } catch (err) {
                 console.error('Failed to load quote', err)
             } finally {
@@ -60,6 +39,11 @@ function DailyQuote() {
             </div>
             <p className="quote-text">"{quote.text}"</p>
             <p className="quote-author">— {quote.author}</p>
+            {quote.error && (
+                <p style={{ color: 'red', fontSize: '0.8rem', marginTop: '10px' }}>
+                    Error: {quote.errorMessage || 'Failed to fetch quote'}
+                </p>
+            )}
         </div>
     )
 }

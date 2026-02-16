@@ -70,6 +70,9 @@
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
+
+  /* Borders */
+  --border: rgba(0, 0, 0, 0.08);
 }
 
 /* ===== Dark Theme ===== */
@@ -91,6 +94,8 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-nav: 0 -4px 20px rgba(0, 0, 0, 0.3);
+
+  --border: rgba(255, 255, 255, 0.1);
 }
 
 /* ===== Reset ===== */

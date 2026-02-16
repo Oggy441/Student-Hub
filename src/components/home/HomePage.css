@@ -369,25 +369,31 @@
 
 .quick-notes-add {
     display: flex;
+    align-items: center;
     gap: var(--space-2);
     margin-bottom: var(--space-3);
 }
 
 .quick-notes-input {
     flex: 1;
-    border: 1.5px solid var(--border);
+    min-width: 0;
+    /* Allow the input to shrink on small screens */
+    border: 1.5px solid var(--border, rgba(0, 0, 0, 0.1));
     border-radius: var(--radius-md);
     padding: 10px 14px;
     font-family: inherit;
     font-size: var(--font-size-base);
     color: var(--text-primary);
-    background: var(--bg-primary);
+    background: var(--bg-input);
+    /* Fixed variable name */
     outline: none;
-    transition: border-color var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
 .quick-notes-input:focus {
     border-color: var(--primary);
+    background: var(--bg-card);
+    box-shadow: 0 0 0 3px var(--primary-bg);
 }
 
 .quick-notes-input::placeholder {
@@ -395,8 +401,9 @@
 }
 
 .quick-notes-add-btn {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    /* Slightly larger for better touch target */
+    height: 42px;
     border-radius: var(--radius-md);
     background: var(--primary);
     color: white;
@@ -406,7 +413,17 @@
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: opacity var(--transition-fast);
+    transition: all var(--transition-fast);
+}
+
+.quick-notes-add-btn:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.quick-notes-add-btn:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .quick-notes-add-btn:disabled {
