@@ -28,6 +28,14 @@ function getGradeColor(grade) {
     return '#ef4444' // red for D/F
 }
 
+function getDisplayTitle(cls) {
+    // Show "DET" instead of "Differential Eq. & Transforms"
+    if (cls.subject === 'DET') {
+        return 'DET'
+    }
+    return cls.topic
+}
+
 function HomePage() {
     const { isDark, toggleTheme } = useTheme()
     const { currentUser, logout } = useAuth()
@@ -248,7 +256,7 @@ function HomePage() {
                     {getUpcomingClasses(selectedGroup, 4).map((cls, i) => (
                         <div key={i} className="upcoming-card">
                             <div className="upcoming-accent" style={{ background: SUBJECT_COLORS[cls.subject] || '#6b7280' }} />
-                            <h3 className="upcoming-title">{cls.topic}</h3>
+                            <h3 className="upcoming-title">{getDisplayTitle(cls)}</h3>
                             <p className="upcoming-date">{cls.dayLabel}, {cls.time}</p>
                         </div>
                     ))}

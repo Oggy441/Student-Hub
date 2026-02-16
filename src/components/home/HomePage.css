@@ -267,7 +267,7 @@
 
 .upcoming-card {
     flex-shrink: 0;
-    width: 200px;
+    width: 220px;
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     padding: var(--space-5) var(--space-4);
@@ -291,10 +291,11 @@
 .upcoming-accent {
     position: absolute;
     top: 16px;
-    right: 16px;
+    right: var(--space-4);
     width: 32px;
     height: 4px;
     border-radius: var(--radius-full);
+    z-index: 1;
 }
 
 .upcoming-title {
@@ -304,12 +305,17 @@
     margin-bottom: var(--space-2);
     margin-top: 0;
     line-height: 1.25;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .upcoming-date {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
     line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Current Grades Quick View */
