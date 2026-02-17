@@ -30,6 +30,7 @@ function NotesPage() {
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeFolder, setActiveFolder] = useState(null)
+  const [activeChapter, setActiveChapter] = useState(null)
 
   useEffect(() => {
     loadNotes()
@@ -47,22 +48,34 @@ function NotesPage() {
     }
   }
 
-  // Group notes by subject
+  // Group notes by subject and then by chapter
   function getFolders() {
     const folderMap = {}
 
     // Initialize all known subjects
     Object.keys(FOLDER_ICONS).forEach(subject => {
-      folderMap[subject] = []
+      folderMap[subject] = {
+        _root: [], // Notes without a specific chapter
+        _chapters: {} // Notes grouped by chapter
+      }
     })
 
-    // Sort notes into subjects
+    // Sort notes into subjects and chapters
     notes.forEach(note => {
       const subject = note.subject || 'BEEE'
       if (!folderMap[subject]) {
-        folderMap[subject] = []
+        folderMap[subject] = { _root: [], _chapters: {} }
       }
-      folderMap[subject].push(note)
+
+      const chapter = note.chapter
+      if (chapter) {
+        if (!folderMap[subject]._chapters[chapter]) {
+          folderMap[subject]._chapters[chapter] = []
+        }
+        folderMap[subject]._chapters[chapter].push(note)
+      } else {
+        folderMap[subject]._root.push(note)
+      }
     })
 
     return folderMap
@@ -77,9 +90,99 @@ function NotesPage() {
 
   const folders = getFolders()
 
+  // Helper component to render a list of notes
+  const NoteList = ({ notes }) => (
+    <div className="notes-list">
+      {notes.map(note => (
+        <div key={note.id} className="note-list-item card">
+          <div className="note-list-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+          </div>
+          <div className="note-list-info">
+            <span className="note-list-title">{note.title}</span>
+            <span className="note-list-meta">
+              {formatFileSize(note.fileSize)}
+              {note.uploadedAt?.seconds && (
+                <> · {new Date(note.uploadedAt.seconds * 1000).toLocaleDateString()}</>
+              )}
+            </span>
+          </div>
+          <div className="note-list-actions">
+            {note.driveViewUrl && (
+              <a
+                href={note.driveViewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="note-action-btn view-btn"
+                title="View"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </a>
+            )}
+            {note.driveDownloadUrl && (
+              <a
+                href={note.driveDownloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="note-action-btn download-btn"
+                title="Download"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </a>
+            )}
+            {!note.driveViewUrl && !note.driveDownloadUrl && (
+              <span className="note-pending">Pending</span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
   // Inside a subject folder
   if (activeFolder) {
-    const folderNotes = folders[activeFolder] || []
+    const folderData = folders[activeFolder] || { _root: [], _chapters: {} }
+
+    // Check if viewing a specific chapter
+    if (activeChapter) {
+      const chapterNotes = folderData._chapters[activeChapter] || []
+      return (
+        <div className="page notes-page">
+          <header className="notes-header notes-header-centered">
+            <button className="back-btn-notes" onClick={() => setActiveChapter(null)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+            </button>
+            <h1>📂 {activeChapter}</h1>
+            <div style={{ width: 36 }} />
+          </header>
+          <div className="page-content">
+            {chapterNotes.length === 0 ? (
+              <div className="empty-state-box">
+                <h3>No notes in this chapter</h3>
+              </div>
+            ) : (
+              <NoteList notes={chapterNotes} />
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    const hasNotes = folderData._root.length > 0 || Object.keys(folderData._chapters).length > 0
+
     return (
       <div className="page notes-page">
         <header className="notes-header notes-header-centered">
@@ -96,66 +199,41 @@ function NotesPage() {
         <p className="folder-full-name">{FOLDER_FULL_NAMES[activeFolder] || ''}</p>
 
         <div className="page-content">
-          {folderNotes.length === 0 ? (
+          {!hasNotes ? (
             <div className="empty-state-box">
               <h3>No notes yet</h3>
               <p>Notes for this subject will appear here once uploaded by admin.</p>
             </div>
           ) : (
-            <div className="notes-list">
-              {folderNotes.map(note => (
-                <div key={note.id} className="note-list-item card">
-                  <div className="note-list-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                  </div>
-                  <div className="note-list-info">
-                    <span className="note-list-title">{note.title}</span>
-                    <span className="note-list-meta">
-                      {formatFileSize(note.fileSize)}
-                      {note.uploadedAt?.seconds && (
-                        <> · {new Date(note.uploadedAt.seconds * 1000).toLocaleDateString()}</>
-                      )}
-                    </span>
-                  </div>
-                  <div className="note-list-actions">
-                    {note.driveViewUrl && (
-                      <a
-                        href={note.driveViewUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="note-action-btn view-btn"
-                        title="View"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </a>
-                    )}
-                    {note.driveDownloadUrl && (
-                      <a
-                        href={note.driveDownloadUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="note-action-btn download-btn"
-                        title="Download"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="7 10 12 15 17 10" />
-                          <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                      </a>
-                    )}
-                    {!note.driveViewUrl && !note.driveDownloadUrl && (
-                      <span className="note-pending">Pending</span>
-                    )}
-                  </div>
+            <div className="notes-container">
+              {/* Render Chapters as Folders First */}
+              {Object.keys(folderData._chapters).length > 0 && (
+                <div className="folders-grid" style={{ marginBottom: 'var(--space-6)' }}>
+                  {Object.entries(folderData._chapters).sort().map(([chapterName, chapterNotes]) => (
+                    <div
+                      key={chapterName}
+                      className="folder-card card"
+                      onClick={() => setActiveChapter(chapterName)}
+                    >
+                      <div className="folder-icon-bg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
+                        <span className="folder-emoji">📂</span>
+                      </div>
+                      <h3 className="folder-name">{chapterName}</h3>
+                      <p className="folder-count">
+                        {chapterNotes.length} notes
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* Render Root Notes */}
+              {folderData._root.length > 0 && (
+                <div className="root-section">
+                  {Object.keys(folderData._chapters).length > 0 && <h3 className="chapter-title">📄 General Files</h3>}
+                  <NoteList notes={folderData._root} />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -195,7 +273,7 @@ function NotesPage() {
                 <h3 className="folder-name">{folderName}</h3>
                 <p className="folder-full-label">{FOLDER_FULL_NAMES[folderName] || ''}</p>
                 <p className="folder-count">
-                  {folderNotes.length} {folderNotes.length === 1 ? 'note' : 'notes'}
+                  {folderNotes._root.length + Object.values(folderNotes._chapters).reduce((a, b) => a + b.length, 0)} notes
                 </p>
               </div>
             ))}
