@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Student Hub</string>
+    <string name="title_activity_main">Student Hub</string>
+    <string name="package_name">com.oggy441.studenthub</string>
+    <string name="custom_url_scheme">com.oggy441.studenthub</string>
+</resources>

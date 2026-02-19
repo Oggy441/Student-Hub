@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { getUpcomingClasses, SUBJECT_COLORS } from '../../data/scheduleData'
+import { syncScheduleWithWidget } from '../../utils/widgetSync'
 import DailyQuote from './DailyQuote'
 import './HomePage.css'
 
@@ -42,6 +43,7 @@ function HomePage() {
     const navigate = useNavigate()
     const [showDropdown, setShowDropdown] = useState(false)
     const [quickNotes, setQuickNotes] = useState([])
+    const [loadingNotes, setLoadingNotes] = useState(true)
     const [newNote, setNewNote] = useState('')
     const [selectedGroup, setSelectedGroup] = useState(1)
     const [groupOpen, setGroupOpen] = useState(false)
@@ -76,14 +78,24 @@ function HomePage() {
         }
     }, [currentUser])
 
+    // Sync schedule with widget whenever group changes
+    useEffect(() => {
+        if (currentUser) {
+            syncScheduleWithWidget(selectedGroup)
+        }
+    }, [currentUser, selectedGroup])
+
     // Load quick notes from Firestore
     useEffect(() => {
         if (currentUser) {
+            setLoadingNotes(true)
             getDoc(doc(db, 'quickNotes', currentUser.uid)).then(snap => {
                 if (snap.exists() && snap.data().notes) {
                     setQuickNotes(snap.data().notes)
                 }
-            }).catch(() => { })
+            })
+                .catch(() => { })
+                .finally(() => setLoadingNotes(false))
         }
     }, [currentUser])
 
@@ -299,7 +311,14 @@ function HomePage() {
                         </button>
                     </div>
 
-                    {quickNotes.length > 0 && (
+                    {loadingNotes && (
+                        <div className="quick-notes-loading">
+                            <div className="spinner" />
+                            <span>Loading reminders...</span>
+                        </div>
+                    )}
+
+                    {!loadingNotes && quickNotes.length > 0 && (
                         <div className="quick-notes-list">
                             {quickNotes.map(note => (
                                 <div key={note.id} className="quick-note-item">
@@ -315,7 +334,7 @@ function HomePage() {
                         </div>
                     )}
 
-                    {quickNotes.length === 0 && (
+                    {!loadingNotes && quickNotes.length === 0 && (
                         <p className="quick-notes-empty">No reminders yet</p>
                     )}
                 </div>

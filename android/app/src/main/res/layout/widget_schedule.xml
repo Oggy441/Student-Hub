@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="#0f1115">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Coming Up"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/widget_background"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:text="G-1"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <!-- Switched to LinearLayout from HorizontalScrollView for better compatibility -->
+    <LinearLayout
+        android:id="@+id/schedule_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/no_classes_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No more classes today!"
+            android:textColor="#9ba3af"
+            android:textSize="14sp"
+            android:padding="16dp"
+            android:visibility="gone" />
+
+        <!-- Card 1 -->
+        <RelativeLayout
+            android:id="@+id/item_1"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/widget_card_background"
+            android:padding="12dp">
+
+            <FrameLayout
+                android:id="@+id/accent_1"
+                android:layout_width="30dp"
+                android:layout_height="4dp"
+                android:layout_alignParentEnd="true"
+                android:background="#10b981" />
+
+            <TextView
+                android:id="@+id/subject_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="Object Oriented Programming"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/time_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:text="Today, 9:30 - 10:30 AM"
+                android:textColor="#8fa3bf"
+                android:textSize="11sp" />
+        </RelativeLayout>
+
+        <!-- Card 2 -->
+        <RelativeLayout
+            android:id="@+id/item_2"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_card_background"
+            android:padding="12dp">
+
+            <FrameLayout
+                android:id="@+id/accent_2"
+                android:layout_width="30dp"
+                android:layout_height="4dp"
+                android:layout_alignParentEnd="true"
+                android:background="#3b82f6" />
+
+            <TextView
+                android:id="@+id/subject_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="Applied Chemistry"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/time_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:text="Today, 10:30 - 11:30 AM"
+                android:textColor="#8fa3bf"
+                android:textSize="11sp" />
+        </RelativeLayout>
+
+        <!-- Card 3 hidden by default to keep 2 visible side-by-side -->
+        <RelativeLayout
+            android:id="@+id/item_3"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/widget_card_background"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:id="@+id/accent_3"
+                android:layout_width="30dp"
+                android:layout_height="4dp"
+                android:layout_alignParentEnd="true"
+                android:background="#f59e0b" />
+
+            <TextView
+                android:id="@+id/subject_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="BEEE"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/time_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:text="Today, 12:30 - 1:30 PM"
+                android:textColor="#8fa3bf"
+                android:textSize="11sp" />
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

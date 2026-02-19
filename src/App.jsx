@@ -9,6 +9,8 @@ import SettingsPage from './components/settings/SettingsPage'
 import LoginPage from './components/auth/LoginPage'
 import SignupPage from './components/auth/SignupPage'
 import PrivateRoute from './components/auth/PrivateRoute'
+import ErrorBoundary from './components/shared/ErrorBoundary'
+import NotFound from './components/shared/NotFound'
 import './App.css'
 
 function AppContent() {
@@ -17,38 +19,43 @@ function AppContent() {
   return (
     <div className="app">
       <div className="app-content">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={!currentUser ? <LoginPage /> : <Navigate to="/" />} />
-          <Route path="/signup" element={!currentUser ? <SignupPage /> : <Navigate to="/" />} />
+        <ErrorBoundary>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={!currentUser ? <LoginPage /> : <Navigate to="/" />} />
+            <Route path="/signup" element={!currentUser ? <SignupPage /> : <Navigate to="/" />} />
 
-          {/* Protected Routes */}
-          <Route path="/" element={
-            <PrivateRoute>
-              <HomePage />
-            </PrivateRoute>
-          } />
-          <Route path="/notes" element={
-            <PrivateRoute>
-              <NotesPage />
-            </PrivateRoute>
-          } />
-          <Route path="/grades" element={
-            <PrivateRoute>
-              <GradesPage />
-            </PrivateRoute>
-          } />
-          <Route path="/schedule" element={
-            <PrivateRoute>
-              <SchedulePage />
-            </PrivateRoute>
-          } />
-          <Route path="/settings" element={
-            <PrivateRoute>
-              <SettingsPage />
-            </PrivateRoute>
-          } />
-        </Routes>
+            {/* Protected Routes */}
+            <Route path="/" element={
+              <PrivateRoute>
+                <HomePage />
+              </PrivateRoute>
+            } />
+            <Route path="/notes" element={
+              <PrivateRoute>
+                <NotesPage />
+              </PrivateRoute>
+            } />
+            <Route path="/grades" element={
+              <PrivateRoute>
+                <GradesPage />
+              </PrivateRoute>
+            } />
+            <Route path="/schedule" element={
+              <PrivateRoute>
+                <SchedulePage />
+              </PrivateRoute>
+            } />
+            <Route path="/settings" element={
+              <PrivateRoute>
+                <SettingsPage />
+              </PrivateRoute>
+            } />
+
+            {/* Catch-all Route for 404 Not Found */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </ErrorBoundary>
       </div>
 
       {/* Show navigation only when logged in */}

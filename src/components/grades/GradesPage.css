@@ -299,3 +299,10 @@
 .grades-animated .bar-fill {
     height: var(--bar-height) !important;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
+}
