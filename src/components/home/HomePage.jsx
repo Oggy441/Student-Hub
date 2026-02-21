@@ -45,7 +45,10 @@ function HomePage() {
     const [quickNotes, setQuickNotes] = useState([])
     const [loadingNotes, setLoadingNotes] = useState(true)
     const [newNote, setNewNote] = useState('')
-    const [selectedGroup, setSelectedGroup] = useState(1)
+    const [selectedGroup, setSelectedGroup] = useState(() => {
+        const saved = localStorage.getItem('selectedGroup')
+        return saved ? parseInt(saved, 10) : 1
+    })
     const [groupOpen, setGroupOpen] = useState(false)
     const dropdownRef = useRef(null)
     const groupRef = useRef(null)
@@ -82,6 +85,7 @@ function HomePage() {
     useEffect(() => {
         if (currentUser) {
             syncScheduleWithWidget(selectedGroup)
+            localStorage.setItem('selectedGroup', selectedGroup.toString())
         }
     }, [currentUser, selectedGroup])
 

@@ -27,6 +27,7 @@ function Navigation() {
         <span className="nav-label">Notes</span>
       </NavLink>
 
+      {/* 
       <NavLink to="/grades" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <span className="nav-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -37,6 +38,7 @@ function Navigation() {
         </span>
         <span className="nav-label">Grades</span>
       </NavLink>
+      */}
 
       <NavLink to="/schedule" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <span className="nav-icon">

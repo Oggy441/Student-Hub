@@ -70,9 +70,11 @@ export const SCHEDULE = {
  */
 export function getTodayClasses(selectedGroup = 1) {
     const now = new Date()
-    let dayIndex = now.getDay() // 0=Sun..6=Sat
-    // On weekends, show Monday's schedule
-    if (dayIndex === 0 || dayIndex === 6) dayIndex = 1
+    const dayIndex = now.getDay() // 0=Sun..6=Sat
+
+    // On weekends, return empty array
+    if (dayIndex === 0 || dayIndex === 6) return []
+
     const scheduleIndex = dayIndex - 1 // 0=Mon..4=Fri
     const allClasses = SCHEDULE[scheduleIndex] || []
     return allClasses.filter(cls => cls.group === null || cls.group === selectedGroup)
@@ -88,15 +90,9 @@ export function getUpcomingClasses(selectedGroup = 1, limit = 4) {
     const currentMinute = now.getMinutes()
     let dayIndex = now.getDay()
 
-    // On weekends, show Monday
+    // On weekends, return empty
     if (dayIndex === 0 || dayIndex === 6) {
-        const mondayClasses = (SCHEDULE[0] || []).filter(
-            cls => cls.group === null || cls.group === selectedGroup
-        )
-        return mondayClasses.slice(0, limit).map(cls => ({
-            ...cls,
-            dayLabel: 'Monday',
-        }))
+        return []
     }
 
     const scheduleIndex = dayIndex - 1

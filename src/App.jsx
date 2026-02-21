@@ -36,11 +36,13 @@ function AppContent() {
                 <NotesPage />
               </PrivateRoute>
             } />
+            {/* 
             <Route path="/grades" element={
               <PrivateRoute>
                 <GradesPage />
               </PrivateRoute>
             } />
+            */}
             <Route path="/schedule" element={
               <PrivateRoute>
                 <SchedulePage />

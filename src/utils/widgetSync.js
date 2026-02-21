@@ -1,5 +1,5 @@
 import { registerPlugin, Capacitor } from '@capacitor/core';
-import { getUpcomingClasses } from '../data/scheduleData';
+import { getUpcomingClasses, SUBJECT_COLORS } from '../data/scheduleData';
 
 const WidgetSync = registerPlugin('WidgetSync');
 
