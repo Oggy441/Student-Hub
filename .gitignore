@@ -29,3 +29,7 @@ dist-ssr
 .env.production.local
 
 .env.vercel
+
+# Firebase
+android/app/google-services.json
+
