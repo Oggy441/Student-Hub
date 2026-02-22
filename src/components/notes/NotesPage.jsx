@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getAllNotes } from '../../services/notesService'
 import './NotesPage.css'
 
+// Standardised to 'OOPS' (uppercase) to match scheduleData.js and SUBJECT_COLORS
 const FOLDER_ICONS = {
   'BEEE': '🔌',
   'DET': '📝',
   'AC': '🧪',
-  'OOPs': '💻',
+  'OOPS': '💻',
   'EG': '📐',
 }
 
@@ -14,84 +15,21 @@ const FOLDER_COLORS = {
   'BEEE': '#f59e0b',
   'DET': '#3b82f6',
   'AC': '#10b981',
-  'OOPs': '#8b5cf6',
+  'OOPS': '#8b5cf6',
   'EG': '#6366f1',
 }
 
 const FOLDER_FULL_NAMES = {
   'BEEE': 'Basic Electrical & Electronics',
-  'DET': 'Differential Equations and Transformers',
+  'DET': 'Differential Equations and Transforms',
   'AC': 'Applied Chemistry',
-  'OOPs': 'Object Oriented Programming',
+  'OOPS': 'Object Oriented Programming',
   'EG': 'Engineering Graphics',
 }
 
-function NotesPage() {
-  const [notes, setNotes] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [activeFolder, setActiveFolder] = useState(null)
-  const [activeChapter, setActiveChapter] = useState(null)
-
-  useEffect(() => {
-    loadNotes()
-  }, [])
-
-  async function loadNotes() {
-    try {
-      setLoading(true)
-      const allNotes = await getAllNotes()
-      setNotes(allNotes)
-    } catch (err) {
-      console.error('Error loading notes:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Group notes by subject and then by chapter
-  function getFolders() {
-    const folderMap = {}
-
-    // Initialize all known subjects
-    Object.keys(FOLDER_ICONS).forEach(subject => {
-      folderMap[subject] = {
-        _root: [], // Notes without a specific chapter
-        _chapters: {} // Notes grouped by chapter
-      }
-    })
-
-    // Sort notes into subjects and chapters
-    notes.forEach(note => {
-      const subject = note.subject || 'BEEE'
-      if (!folderMap[subject]) {
-        folderMap[subject] = { _root: [], _chapters: {} }
-      }
-
-      const chapter = note.chapter
-      if (chapter) {
-        if (!folderMap[subject]._chapters[chapter]) {
-          folderMap[subject]._chapters[chapter] = []
-        }
-        folderMap[subject]._chapters[chapter].push(note)
-      } else {
-        folderMap[subject]._root.push(note)
-      }
-    })
-
-    return folderMap
-  }
-
-  function formatFileSize(bytes) {
-    if (!bytes) return ''
-    if (bytes < 1024) return bytes + ' B'
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
-    return (bytes / 1048576).toFixed(1) + ' MB'
-  }
-
-  const folders = getFolders()
-
-  // Helper component to render a list of notes
-  const NoteList = ({ notes }) => (
+// Extracted to module scope so it is not re-created on every render
+function NoteList({ notes }) {
+  return (
     <div className="notes-list">
       {notes.map(note => (
         <div key={note.id} className="note-list-item card">
@@ -148,39 +86,97 @@ function NotesPage() {
       ))}
     </div>
   )
+}
 
-  // Inside a subject folder
+function formatFileSize(bytes) {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1048576).toFixed(1)} MB`
+}
+
+function NotesPage() {
+  const [notes, setNotes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeFolder, setActiveFolder] = useState(null)
+  const [activeChapter, setActiveChapter] = useState(null)
+
+  useEffect(() => {
+    loadNotes()
+  }, [])
+
+  async function loadNotes() {
+    try {
+      setLoading(true)
+      const allNotes = await getAllNotes()
+      setNotes(allNotes)
+    } catch (err) {
+      console.error('Error loading notes:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Memoised: only re-computed when the notes array changes
+  const folders = useMemo(() => {
+    const folderMap = {}
+
+    // Initialise all known subjects (in display order)
+    Object.keys(FOLDER_ICONS).forEach(subject => {
+      folderMap[subject] = { _root: [], _chapters: {} }
+    })
+
+    notes.forEach(note => {
+      const subject = note.subject || 'BEEE'
+      if (!folderMap[subject]) {
+        folderMap[subject] = { _root: [], _chapters: {} }
+      }
+
+      const chapter = note.chapter
+      if (chapter) {
+        if (!folderMap[subject]._chapters[chapter]) {
+          folderMap[subject]._chapters[chapter] = []
+        }
+        folderMap[subject]._chapters[chapter].push(note)
+      } else {
+        folderMap[subject]._root.push(note)
+      }
+    })
+
+    return folderMap
+  }, [notes])
+
+  // --- Chapter view ---
+  if (activeFolder && activeChapter) {
+    const chapterNotes = folders[activeFolder]?._chapters[activeChapter] || []
+    return (
+      <div className="page notes-page">
+        <header className="notes-header notes-header-centered">
+          <button className="back-btn-notes" onClick={() => setActiveChapter(null)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <h1>📂 {activeChapter}</h1>
+          <div style={{ width: 36 }} />
+        </header>
+        <div className="page-content">
+          {chapterNotes.length === 0 ? (
+            <div className="empty-state-box">
+              <h3>No notes in this chapter</h3>
+            </div>
+          ) : (
+            <NoteList notes={chapterNotes} />
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // --- Subject folder view ---
   if (activeFolder) {
     const folderData = folders[activeFolder] || { _root: [], _chapters: {} }
-
-    // Check if viewing a specific chapter
-    if (activeChapter) {
-      const chapterNotes = folderData._chapters[activeChapter] || []
-      return (
-        <div className="page notes-page">
-          <header className="notes-header notes-header-centered">
-            <button className="back-btn-notes" onClick={() => setActiveChapter(null)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12" />
-                <polyline points="12 19 5 12 12 5" />
-              </svg>
-            </button>
-            <h1>📂 {activeChapter}</h1>
-            <div style={{ width: 36 }} />
-          </header>
-          <div className="page-content">
-            {chapterNotes.length === 0 ? (
-              <div className="empty-state-box">
-                <h3>No notes in this chapter</h3>
-              </div>
-            ) : (
-              <NoteList notes={chapterNotes} />
-            )}
-          </div>
-        </div>
-      )
-    }
-
     const hasNotes = folderData._root.length > 0 || Object.keys(folderData._chapters).length > 0
 
     return (
@@ -206,7 +202,6 @@ function NotesPage() {
             </div>
           ) : (
             <div className="notes-container">
-              {/* Render Chapters as Folders First */}
               {Object.keys(folderData._chapters).length > 0 && (
                 <div className="folders-grid" style={{ marginBottom: 'var(--space-6)' }}>
                   {Object.entries(folderData._chapters).sort().map(([chapterName, chapterNotes]) => (
@@ -219,18 +214,17 @@ function NotesPage() {
                         <span className="folder-emoji">📂</span>
                       </div>
                       <h3 className="folder-name">{chapterName}</h3>
-                      <p className="folder-count">
-                        {chapterNotes.length} notes
-                      </p>
+                      <p className="folder-count">{chapterNotes.length} notes</p>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Render Root Notes */}
               {folderData._root.length > 0 && (
                 <div className="root-section">
-                  {Object.keys(folderData._chapters).length > 0 && <h3 className="chapter-title">📄 General Files</h3>}
+                  {Object.keys(folderData._chapters).length > 0 && (
+                    <h3 className="chapter-title">📄 General Files</h3>
+                  )}
                   <NoteList notes={folderData._root} />
                 </div>
               )}
@@ -241,7 +235,7 @@ function NotesPage() {
     )
   }
 
-  // Folder grid view (main view)
+  // --- Folder grid (main view) ---
   return (
     <div className="page notes-page">
       <header className="notes-header">
@@ -256,27 +250,30 @@ function NotesPage() {
           </div>
         ) : (
           <div className="folders-grid">
-            {Object.entries(folders).map(([folderName, folderNotes]) => (
-              <div
-                key={folderName}
-                className="folder-card card"
-                onClick={() => setActiveFolder(folderName)}
-              >
+            {Object.entries(folders).map(([folderName, folderData]) => {
+              const count =
+                folderData._root.length +
+                Object.values(folderData._chapters).reduce((acc, arr) => acc + arr.length, 0)
+              return (
                 <div
-                  className="folder-icon-bg"
-                  style={{ background: `${FOLDER_COLORS[folderName] || '#6b7280'}15` }}
+                  key={folderName}
+                  className="folder-card card"
+                  onClick={() => setActiveFolder(folderName)}
                 >
-                  <span className="folder-emoji">
-                    {FOLDER_ICONS[folderName] || '📁'}
-                  </span>
+                  <div
+                    className="folder-icon-bg"
+                    style={{ background: `${FOLDER_COLORS[folderName] || '#6b7280'}15` }}
+                  >
+                    <span className="folder-emoji">
+                      {FOLDER_ICONS[folderName] || '📁'}
+                    </span>
+                  </div>
+                  <h3 className="folder-name">{folderName}</h3>
+                  <p className="folder-full-label">{FOLDER_FULL_NAMES[folderName] || ''}</p>
+                  <p className="folder-count">{count} notes</p>
                 </div>
-                <h3 className="folder-name">{folderName}</h3>
-                <p className="folder-full-label">{FOLDER_FULL_NAMES[folderName] || ''}</p>
-                <p className="folder-count">
-                  {folderNotes._root.length + Object.values(folderNotes._chapters).reduce((a, b) => a + b.length, 0)} notes
-                </p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

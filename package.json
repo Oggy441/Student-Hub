@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "build-android": "vite build && npx cap sync && cd android && gradlew.bat assembleDebug",
+    "install-apk": "C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r android\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+    "deploy": "npm run build-android && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell am force-stop com.oggy441.studenthub && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell pm clear com.oggy441.studenthub && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r android\\app\\build\\outputs\\apk\\debug\\app-debug.apk && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell monkey -p com.oggy441.studenthub -c android.intent.category.LAUNCHER 1",
     "lint": "eslint .",
     "preview": "vite preview"
   },

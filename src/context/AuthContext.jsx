@@ -5,26 +5,30 @@ import {
     signOut,
     onAuthStateChanged,
     updateProfile,
-    updateEmail
+    updateEmail,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
 
 const AuthContext = createContext()
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     return useContext(AuthContext)
 }
 
 export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null)
+    // Firestore-only fields are kept separate from the Firebase User object
+    // to avoid mutating a sealed native object (which silently fails in strict mode).
+    const [userProfile, setUserProfile] = useState({ rollNo: null, role: null, grades: [] })
     const [loading, setLoading] = useState(true)
 
     async function signup(email, password, name, rollNo) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const user = userCredential.user
 
-        // Update Auth profile
+        // Update Firebase Auth profile (displayName only)
         await updateProfile(user, { displayName: name })
 
         // Create user document in Firestore
@@ -33,7 +37,7 @@ export function AuthProvider({ children }) {
             email,
             rollNo,
             role: 'student',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
         })
 
         return userCredential
@@ -51,23 +55,21 @@ export function AuthProvider({ children }) {
         const user = auth.currentUser
         if (!user) return
 
-        // Update Auth profile (displayName, photoURL)
+        // Update Firebase Auth profile (displayName, photoURL)
         if (data.displayName || data.photoURL) {
             await updateProfile(user, {
                 displayName: data.displayName,
-                photoURL: data.photoURL
+                photoURL: data.photoURL,
             })
+            // Force a re-render with the updated user object
+            setCurrentUser({ ...user })
         }
 
         // Update Firestore document (rollNo, etc.)
-        if (data.rollNo) {
-            await setDoc(doc(db, 'users', user.uid), {
-                rollNo: data.rollNo
-            }, { merge: true })
+        if (data.rollNo !== undefined) {
+            await setDoc(doc(db, 'users', user.uid), { rollNo: data.rollNo }, { merge: true })
+            setUserProfile(prev => ({ ...prev, rollNo: data.rollNo }))
         }
-
-        // Refresh local state if needed (simplified)
-        // Ideally we'd re-fetch, but for now we rely on the next refresh or manual state update if critical
     }
 
     function updateUserEmail(email) {
@@ -76,22 +78,27 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            setCurrentUser(user)
+
             if (user) {
-                // Fetch additional data from Firestore
+                // Fetch Firestore-specific fields into dedicated state
                 try {
                     const userDoc = await getDoc(doc(db, 'users', user.uid))
                     if (userDoc.exists()) {
-                        const userData = userDoc.data()
-                        // Merge Firestore data into the user object
-                        user.rollNo = userData.rollNo
-                        user.role = userData.role
-                        user.grades = userData.grades || []
+                        const data = userDoc.data()
+                        setUserProfile({
+                            rollNo: data.rollNo ?? null,
+                            role: data.role ?? 'student',
+                            grades: data.grades ?? [],
+                        })
                     }
                 } catch (err) {
-                    console.error('Error fetching user data:', err)
+                    console.error('Error fetching user profile:', err)
                 }
+            } else {
+                setUserProfile({ rollNo: null, role: null, grades: [] })
             }
-            setCurrentUser(user)
+
             setLoading(false)
         })
 
@@ -100,11 +107,12 @@ export function AuthProvider({ children }) {
 
     const value = {
         currentUser,
+        userProfile,
         signup,
         login,
         logout,
         updateUserProfile,
-        updateUserEmail
+        updateUserEmail,
     }
 
     return (

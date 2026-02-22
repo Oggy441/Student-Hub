@@ -1,20 +1,27 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../hooks/useTheme'
 import './SettingsPage.css'
 
 function SettingsPage() {
-    const { currentUser, logout, updateUserProfile, updateUserEmail } = useAuth()
+    const { currentUser, userProfile, logout, updateUserProfile, updateUserEmail } = useAuth()
     const { isDark, toggleTheme } = useTheme()
     const navigate = useNavigate()
 
     const [name, setName] = useState(currentUser?.displayName || '')
-    const [rollNo, setRollNo] = useState(currentUser?.rollNo || '')
+    const [rollNo, setRollNo] = useState(userProfile?.rollNo || '')
     const [email, setEmail] = useState(currentUser?.email || '')
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
+
+    // Auto-dismiss the success message after 3 seconds
+    useEffect(() => {
+        if (!message) return
+        const timer = setTimeout(() => setMessage(''), 3000)
+        return () => clearTimeout(timer)
+    }, [message])
 
     async function handleSaveProfile(e) {
         e.preventDefault()
@@ -29,7 +36,7 @@ function SettingsPage() {
             if (email !== currentUser.email) {
                 await updateUserEmail(email)
             }
-            if (rollNo && rollNo !== currentUser.rollNo) {
+            if (rollNo && rollNo !== userProfile?.rollNo) {
                 await updateUserProfile({ rollNo })
             }
 
@@ -47,10 +54,15 @@ function SettingsPage() {
         navigate('/login')
     }
 
+    const hasChanges =
+        name !== (currentUser?.displayName ?? '') ||
+        email !== (currentUser?.email ?? '') ||
+        rollNo !== (userProfile?.rollNo ?? '')
+
     return (
         <div className="page settings-page">
             <header className="settings-header">
-                <button className="back-btn-settings" onClick={() => navigate('/')}>
+                <button className="back-btn-settings" onClick={() => navigate('/')} aria-label="Back">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="19" y1="12" x2="5" y2="12" />
                         <polyline points="12 19 5 12 12 5" />
@@ -108,18 +120,14 @@ function SettingsPage() {
                                 value={rollNo}
                                 onChange={(e) => setRollNo(e.target.value)}
                                 placeholder="Enter your roll number"
-                                disabled={!!currentUser?.rollNo}
-                                title={currentUser?.rollNo ? "Contact admin to change roll number" : "Set your roll number"}
+                                disabled={!!userProfile?.rollNo}
+                                title={userProfile?.rollNo ? 'Contact admin to change roll number' : 'Set your roll number'}
                             />
                         </div>
                         <button
                             className="btn btn-primary btn-full"
                             type="submit"
-                            disabled={saving || (
-                                name === currentUser?.displayName &&
-                                email === currentUser?.email &&
-                                rollNo === (currentUser?.rollNo || '')
-                            )}
+                            disabled={saving || !hasChanges}
                         >
                             {saving ? 'Saving...' : 'Save Changes'}
                         </button>
@@ -137,14 +145,10 @@ function SettingsPage() {
                                 {isDark ? (
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <circle cx="12" cy="12" r="5" />
-                                        <line x1="12" y1="1" x2="12" y2="3" />
-                                        <line x1="12" y1="21" x2="12" y2="23" />
-                                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                        <line x1="1" y1="12" x2="3" y2="12" />
-                                        <line x1="21" y1="12" x2="23" y2="12" />
-                                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                                        <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                        <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                                     </svg>
                                 ) : (
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

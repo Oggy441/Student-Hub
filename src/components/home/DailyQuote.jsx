@@ -40,8 +40,8 @@ function DailyQuote() {
             <p className="quote-text">"{quote.text}"</p>
             <p className="quote-author">— {quote.author}</p>
             {quote.error && (
-                <p style={{ color: 'red', fontSize: '0.8rem', marginTop: '10px' }}>
-                    Error: {quote.errorMessage || 'Failed to fetch quote'}
+                <p className="quote-error">
+                    Failed to load today&apos;s quote.
                 </p>
             )}
         </div>

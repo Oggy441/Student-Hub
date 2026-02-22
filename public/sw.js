@@ -1,20 +1,20 @@
-const CACHE_NAME = 'studyhub-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/manifest.json'
-];
+// Service Worker — network-first strategy for a Capacitor app.
+// In a packaged APK, all assets come from the local bundle, so the SW
+// should ALWAYS let the network (local bundle) win; never serve stale cache.
 
-self.addEventListener('install', event => {
+// Delete all old caches on activation so every new build starts fresh.
+self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
+        caches.keys().then(keys =>
+            Promise.all(keys.map(key => caches.delete(key)))
+        ).then(() => self.clients.claim())
     );
 });
 
+// Network-first: try the bundle / network, only fall back to cache if offline.
 self.addEventListener('fetch', event => {
     event.respondWith(
-        caches.match(event.request)
-            .then(response => response || fetch(event.request))
+        fetch(event.request)
+            .catch(() => caches.match(event.request))
     );
 });

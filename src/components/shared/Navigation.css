@@ -6,17 +6,14 @@
   transform: translateX(-50%);
   width: 100%;
   max-width: 430px;
+  /* Fully opaque — opacity < 1 caused scrolled content to bleed through as a white line */
   background: var(--bg-elevated);
-  opacity: 0.96;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   display: flex;
   justify-content: space-around;
   align-items: center;
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
   box-shadow: var(--shadow-nav);
   z-index: 1000;
-  border-top: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .nav-item {

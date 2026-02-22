@@ -7,10 +7,12 @@
   background: var(--bg-base);
 }
 
-/* Glassmorphism wrapper for the main content area */
+/* Main content wrapper — padded away from system bars on Android */
 .app-content {
-  padding-bottom: 88px;
-  /* Space for bottom nav */
+  /* Push content below the transparent status bar */
+  padding-top: env(safe-area-inset-top);
+  /* Push content above the bottom nav + system gesture bar */
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
   min-height: 100vh;
 }
 
@@ -87,6 +89,17 @@
 
 .btn-primary:active {
   transform: translateY(0);
+}
+
+.btn-danger {
+  background: var(--error);
+  color: var(--text-inverse);
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .btn-full {

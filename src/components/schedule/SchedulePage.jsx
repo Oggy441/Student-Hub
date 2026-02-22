@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { SCHEDULE, SUBJECT_COLORS } from '../../data/scheduleData'
 import './SchedulePage.css'
 
@@ -37,8 +37,14 @@ function formatDateFull(date) {
 
 function SchedulePage() {
     const visibleDays = useMemo(() => getVisibleDays(), [])
-    const [selectedGroup, setSelectedGroup] = useState(1)
+
+    const [selectedGroup, setSelectedGroup] = useState(() => {
+        // Persist group choice in localStorage (synced with HomePage)
+        const saved = localStorage.getItem('selectedGroup')
+        return saved ? parseInt(saved, 10) : 1
+    })
     const [groupOpen, setGroupOpen] = useState(false)
+    const groupRef = useRef(null)
 
     const [selectedTab, setSelectedTab] = useState(() => {
         const now = new Date()
@@ -48,6 +54,22 @@ function SchedulePage() {
         )
         return todayIdx >= 0 ? todayIdx : 1
     })
+
+    // Persist group selection to localStorage
+    useEffect(() => {
+        localStorage.setItem('selectedGroup', selectedGroup.toString())
+    }, [selectedGroup])
+
+    // Close the group dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (groupRef.current && !groupRef.current.contains(e.target)) {
+                setGroupOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     const currentDay = visibleDays[selectedTab]
     const isToday = currentDay.date.toDateString() === new Date().toDateString()
@@ -90,10 +112,10 @@ function SchedulePage() {
                     <span className="classes-tab active">
                         {filteredClasses.length} Classes
                     </span>
-                    <div className="group-selector-wrapper">
+                    <div className="group-selector-wrapper" ref={groupRef}>
                         <button
                             className="group-selector-btn"
-                            onClick={() => setGroupOpen(!groupOpen)}
+                            onClick={() => setGroupOpen(o => !o)}
                         >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -128,46 +150,52 @@ function SchedulePage() {
                 </div>
 
                 <div className="class-cards">
-                    {filteredClasses.map((cls, i) => {
-                        const color = SUBJECT_COLORS[cls.subject] || '#6b7280'
-                        return (
-                            <div key={i} className="class-card card">
-                                <div className="class-card-left" style={{ background: color }} />
-                                <div className="class-card-body">
-                                    <div className="class-card-top">
-                                        <div className="class-subject-badge" style={{ background: `${color}18`, color }}>
-                                            {cls.subject}
-                                        </div>
-                                        <span className={`class-type-badge type-${cls.type}`}>
-                                            {cls.type === 'L' ? 'Lecture' : cls.type === 'P' ? 'Practical' : 'Tutorial'}
-                                        </span>
-                                    </div>
-                                    <div className="class-info">
-                                        <h3 className="class-topic">{cls.topic}</h3>
-                                        <p className="class-time">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <circle cx="12" cy="12" r="10" />
-                                                <polyline points="12 6 12 12 16 14" />
-                                            </svg>
-                                            {cls.time}
-                                        </p>
-                                        <div className="class-meta">
-                                            <span className="class-room">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                                    <circle cx="12" cy="10" r="3" />
-                                                </svg>
-                                                {cls.room}
+                    {filteredClasses.length === 0 ? (
+                        <div className="schedule-empty">
+                            <p>No classes scheduled for this day.</p>
+                        </div>
+                    ) : (
+                        filteredClasses.map((cls, i) => {
+                            const color = SUBJECT_COLORS[cls.subject] || '#6b7280'
+                            return (
+                                <div key={i} className="class-card card">
+                                    <div className="class-card-left" style={{ background: color }} />
+                                    <div className="class-card-body">
+                                        <div className="class-card-top">
+                                            <div className="class-subject-badge" style={{ background: `${color}18`, color }}>
+                                                {cls.subject}
+                                            </div>
+                                            <span className={`class-type-badge type-${cls.type}`}>
+                                                {cls.type === 'L' ? 'Lecture' : cls.type === 'P' ? 'Practical' : 'Tutorial'}
                                             </span>
-                                            {cls.professor && (
-                                                <span className="class-professor">{cls.professor}</span>
-                                            )}
+                                        </div>
+                                        <div className="class-info">
+                                            <h3 className="class-topic">{cls.topic}</h3>
+                                            <p className="class-time">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <polyline points="12 6 12 12 16 14" />
+                                                </svg>
+                                                {cls.time}
+                                            </p>
+                                            <div className="class-meta">
+                                                <span className="class-room">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                                        <circle cx="12" cy="10" r="3" />
+                                                    </svg>
+                                                    {cls.room}
+                                                </span>
+                                                {cls.professor && (
+                                                    <span className="class-professor">{cls.professor}</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        )
-                    })}
+                            )
+                        })
+                    )}
                 </div>
             </div>
         </div>

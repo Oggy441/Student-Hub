@@ -113,6 +113,12 @@ html {
   background-color: var(--bg-base);
   color: var(--text-primary);
   transition: background 0.3s ease, color 0.3s ease;
+  /* Prevent overscroll from revealing white browser chrome on Android */
+  overscroll-behavior: none;
+  height: 100%;
+  /* Hide scrollbar — WebView renders it as a visible line */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 body {
@@ -124,12 +130,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  min-height: 100vh;
+  min-height: 100%;
+  height: 100%;
+  /* Prevent rubber-band overscroll on Android showing white edges */
+  overscroll-behavior: none;
   transition: background 0.3s ease, color 0.3s ease;
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100%;
+  height: 100%;
+  background: var(--bg-base);
 }
 
 a {
@@ -172,17 +186,16 @@ ol {
   white-space: nowrap;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+/* Hide scrollbars on every element — they render as a visible grey line on Android WebView */
+* {
+  scrollbar-width: none;
+  /* Firefox & modern Android WebView */
+  -ms-overflow-style: none;
+  /* IE / Edge legacy */
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--text-tertiary);
-  border-radius: var(--radius-full);
+*::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
 }

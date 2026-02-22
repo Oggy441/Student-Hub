@@ -1,13 +1,27 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../hooks/useTheme'
 import { useAuth } from '../../context/AuthContext'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { getUpcomingClasses, SUBJECT_COLORS } from '../../data/scheduleData'
 import { syncScheduleWithWidget } from '../../utils/widgetSync'
 import DailyQuote from './DailyQuote'
 import './HomePage.css'
+
+// Pure function — defined at module scope so it's never re-created
+function getGradeColor(grade) {
+    const letter = grade.charAt(0).toUpperCase()
+    if (letter === 'A') return '#10b981' // green
+    if (letter === 'B') return '#6366f1' // indigo
+    if (letter === 'C') return '#f59e0b' // amber
+    return '#ef4444'                     // red for D / F
+}
+
+function getDisplayTitle(cls) {
+    if (cls.subject === 'DET') return 'DET'
+    return cls.topic
+}
 
 const FALLBACK_GRADES = [
     { subject: 'Calc', full: 'Calculus', grade: 'B+' },
@@ -21,26 +35,17 @@ const FALLBACK_GRADES = [
     { subject: 'Workshop', full: 'Workshop (P)', grade: 'A+' },
 ]
 
-function getGradeColor(grade) {
-    const letter = grade.charAt(0).toUpperCase()
-    if (letter === 'A') return '#10b981' // green
-    if (letter === 'B') return '#6366f1' // indigo
-    if (letter === 'C') return '#f59e0b' // amber
-    return '#ef4444' // red for D/F
-}
-
-function getDisplayTitle(cls) {
-    // Show "DET" instead of "Differential Eq. & Transforms"
-    if (cls.subject === 'DET') {
-        return 'DET'
-    }
-    return cls.topic
+const STUDENT_GRADES = {
+    // Map grades with roll number to display them
+    // Example:
+    // '24B1001': FALLBACK_GRADES
 }
 
 function HomePage() {
     const { isDark, toggleTheme } = useTheme()
-    const { currentUser, logout } = useAuth()
+    const { currentUser, userProfile, logout } = useAuth()
     const navigate = useNavigate()
+
     const [showDropdown, setShowDropdown] = useState(false)
     const [quickNotes, setQuickNotes] = useState([])
     const [loadingNotes, setLoadingNotes] = useState(true)
@@ -50,6 +55,7 @@ function HomePage() {
         return saved ? parseInt(saved, 10) : 1
     })
     const [groupOpen, setGroupOpen] = useState(false)
+
     const dropdownRef = useRef(null)
     const groupRef = useRef(null)
 
@@ -60,28 +66,11 @@ function HomePage() {
         return 'Good evening'
     })
 
-    const displayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Student'
+    const displayName =
+        currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Student'
 
-    // Migration: Save default grades if user has none
-    useEffect(() => {
-        if (currentUser && (!currentUser.grades || currentUser.grades.length === 0)) {
-            const migrateGrades = async () => {
-                try {
-                    await setDoc(doc(db, 'users', currentUser.uid), {
-                        grades: FALLBACK_GRADES
-                    }, { merge: true })
-                    console.log('Migrated default grades to Firestore')
-                    // For immediate feedback, we can rely on next reload or manual state update
-                    // Ideally we'd update AuthContext state here but keeping it simple for now
-                } catch (err) {
-                    console.error('Migration failed:', err)
-                }
-            }
-            migrateGrades()
-        }
-    }, [currentUser])
 
-    // Sync schedule with widget whenever group changes
+    // Sync schedule with Android widget whenever the group changes
     useEffect(() => {
         if (currentUser) {
             syncScheduleWithWidget(selectedGroup)
@@ -91,56 +80,26 @@ function HomePage() {
 
     // Load quick notes from Firestore
     useEffect(() => {
-        if (currentUser) {
+        if (!currentUser) return
+        let cancelled = false
+        async function fetchNotes() {
             setLoadingNotes(true)
-            getDoc(doc(db, 'quickNotes', currentUser.uid)).then(snap => {
-                if (snap.exists() && snap.data().notes) {
+            try {
+                const snap = await getDoc(doc(db, 'quickNotes', currentUser.uid))
+                if (!cancelled && snap.exists() && snap.data().notes) {
                     setQuickNotes(snap.data().notes)
                 }
-            })
-                .catch(() => { })
-                .finally(() => setLoadingNotes(false))
+            } catch {
+                // non-critical — just leave the empty state
+            } finally {
+                if (!cancelled) setLoadingNotes(false)
+            }
         }
+        fetchNotes()
+        return () => { cancelled = true }
     }, [currentUser])
 
-    // Save notes to Firestore
-    async function saveNotes(notes) {
-        if (!currentUser) return
-        try {
-            await setDoc(doc(db, 'quickNotes', currentUser.uid), {
-                notes,
-                updatedAt: new Date()
-            })
-        } catch (err) {
-            console.error('Failed to save quick notes:', err)
-        }
-    }
-
-    // Add a new note
-    function handleAddNote() {
-        if (!newNote.trim()) return
-        const updated = [...quickNotes, { id: Date.now(), text: newNote.trim() }]
-        setQuickNotes(updated)
-        setNewNote('')
-        saveNotes(updated)
-    }
-
-    // Delete a note
-    function handleDeleteNote(id) {
-        const updated = quickNotes.filter(n => n.id !== id)
-        setQuickNotes(updated)
-        saveNotes(updated)
-    }
-
-    // Handle Enter key
-    function handleKeyDown(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault()
-            handleAddNote()
-        }
-    }
-
-    // Close dropdown when clicking outside
+    // Close user dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(e) {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -150,6 +109,82 @@ function HomePage() {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
+
+    // Close group dropdown when clicking outside
+    useEffect(() => {
+        function handleGroupClickOutside(e) {
+            if (groupRef.current && !groupRef.current.contains(e.target)) {
+                setGroupOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleGroupClickOutside)
+        return () => document.removeEventListener('mousedown', handleGroupClickOutside)
+    }, [])
+
+    // Save notes to Firestore
+    async function saveNotes(notes) {
+        if (!currentUser) return
+        try {
+            await setDoc(doc(db, 'quickNotes', currentUser.uid), {
+                notes,
+                updatedAt: new Date(),
+            })
+        } catch (err) {
+            console.error('Failed to save quick notes:', err)
+        }
+    }
+
+    function handleAddNote() {
+        if (!newNote.trim()) return
+        const updated = [...quickNotes, { id: Date.now(), text: newNote.trim() }]
+        setQuickNotes(updated)
+        setNewNote('')
+        saveNotes(updated)
+    }
+
+    function handleDeleteNote(id) {
+        const updated = quickNotes.filter(n => n.id !== id)
+        setQuickNotes(updated)
+        saveNotes(updated)
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            handleAddNote()
+        }
+    }
+
+    const userRollNo = (userProfile?.rollNo || '').toUpperCase()
+    const [fetchedGrades, setFetchedGrades] = useState([])
+
+    // Fetch grades mapped by roll no from 'grades' collection
+    useEffect(() => {
+        if (!userRollNo) return
+        let cancelled = false
+        async function fetchGrades() {
+            try {
+                const snap = await getDoc(doc(db, 'grades', userRollNo))
+                if (!cancelled && snap.exists() && snap.data().grades) {
+                    setFetchedGrades(snap.data().grades)
+                }
+            } catch (err) {
+                console.error('Failed to fetch grades by roll no:', err)
+            }
+        }
+        fetchGrades()
+        return () => { cancelled = true }
+    }, [userRollNo])
+
+    // Filter out the old fallback grades that were mistakenly saved for everyone
+    // The fallback grades actually legitimately belong to CO25343
+    const isFallbackBug = userRollNo !== 'CO25343' && userProfile?.grades?.length === 9 && userProfile.grades[0]?.subject === 'Calc'
+    const profileGrades = (userProfile?.grades?.length && !isFallbackBug) ? userProfile.grades : []
+
+    // Priority: Grades Collection > User Profile > Local Mapping
+    const grades = fetchedGrades.length > 0 ? fetchedGrades :
+        (profileGrades.length > 0 ? profileGrades :
+            (STUDENT_GRADES[userRollNo] || []))
 
     return (
         <div className="page home-page">
@@ -170,7 +205,6 @@ function HomePage() {
                         </svg>
                     </button>
 
-                    {/* Avatar Dropdown */}
                     {showDropdown && (
                         <div className="avatar-dropdown">
                             <div className="dropdown-item" onClick={toggleTheme}>
@@ -178,14 +212,10 @@ function HomePage() {
                                     {isDark ? (
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <circle cx="12" cy="12" r="5" />
-                                            <line x1="12" y1="1" x2="12" y2="3" />
-                                            <line x1="12" y1="21" x2="12" y2="23" />
-                                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                            <line x1="1" y1="12" x2="3" y2="12" />
-                                            <line x1="21" y1="12" x2="23" y2="12" />
-                                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                                            <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                            <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                                         </svg>
                                     ) : (
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -193,9 +223,7 @@ function HomePage() {
                                         </svg>
                                     )}
                                 </span>
-                                <span className="dropdown-label">
-                                    {isDark ? 'Light Mode' : 'Dark Mode'}
-                                </span>
+                                <span className="dropdown-label">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
                                 <span className={`theme-toggle ${isDark ? 'active' : ''}`}>
                                     <span className="theme-toggle-knob" />
                                 </span>
@@ -210,7 +238,10 @@ function HomePage() {
                                 <span className="dropdown-label">Settings</span>
                             </div>
                             <div className="dropdown-divider" />
-                            <div className="dropdown-item dropdown-item-danger" onClick={() => { logout(); navigate('/login'); }}>
+                            <div
+                                className="dropdown-item dropdown-item-danger"
+                                onClick={() => { logout(); navigate('/login') }}
+                            >
                                 <span className="dropdown-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -235,7 +266,7 @@ function HomePage() {
                     <div className="group-selector-wrapper" ref={groupRef}>
                         <button
                             className="group-selector-btn"
-                            onClick={() => setGroupOpen(!groupOpen)}
+                            onClick={() => setGroupOpen(o => !o)}
                         >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -280,19 +311,21 @@ function HomePage() {
             </section>
 
             {/* Current Grades */}
-            <section className="home-section">
-                <h2 className="section-title">Current Grades</h2>
-                <div className="grades-quick-grid">
-                    {(currentUser?.grades || FALLBACK_GRADES).map((item, index) => (
-                        <div key={index} className="grade-quick-card">
-                            <div className="grade-subject">{item.subject}</div>
-                            <div className="grade-value" style={{ color: getGradeColor(item.grade) }}>
-                                {item.grade}
+            {grades.length > 0 && (
+                <section className="home-section">
+                    <h2 className="section-title">Current Grades</h2>
+                    <div className="grades-quick-grid">
+                        {grades.map((item, index) => (
+                            <div key={index} className="grade-quick-card">
+                                <div className="grade-subject">{item.subject}</div>
+                                <div className="grade-value" style={{ color: getGradeColor(item.grade) }}>
+                                    {item.grade}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* Quick Notes */}
             <section className="home-section">
@@ -307,7 +340,12 @@ function HomePage() {
                             onChange={(e) => setNewNote(e.target.value)}
                             onKeyDown={handleKeyDown}
                         />
-                        <button className="quick-notes-add-btn" onClick={handleAddNote} disabled={!newNote.trim()}>
+                        <button
+                            className="quick-notes-add-btn"
+                            onClick={handleAddNote}
+                            disabled={!newNote.trim()}
+                            aria-label="Add note"
+                        >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19" />
                                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -327,7 +365,11 @@ function HomePage() {
                             {quickNotes.map(note => (
                                 <div key={note.id} className="quick-note-item">
                                     <span className="quick-note-text">{note.text}</span>
-                                    <button className="quick-note-delete" onClick={() => handleDeleteNote(note.id)}>
+                                    <button
+                                        className="quick-note-delete"
+                                        onClick={() => handleDeleteNote(note.id)}
+                                        aria-label="Delete note"
+                                    >
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <line x1="18" y1="6" x2="6" y2="18" />
                                             <line x1="6" y1="6" x2="18" y2="18" />

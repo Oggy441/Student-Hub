@@ -86,8 +86,6 @@ export function getTodayClasses(selectedGroup = 1) {
  */
 export function getUpcomingClasses(selectedGroup = 1, limit = 4) {
     const now = new Date()
-    const currentHour = now.getHours()
-    const currentMinute = now.getMinutes()
     let dayIndex = now.getDay()
 
     // On weekends, return empty
