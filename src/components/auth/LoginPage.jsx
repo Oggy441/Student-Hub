@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '../../services/firebase'
+import { scrapeStudentGrades } from '../../services/gradeScraperService'
 import './Auth.css'
 
 function LoginPage() {
@@ -17,7 +20,38 @@ function LoginPage() {
         try {
             setError('')
             setLoading(true)
-            await login(email, password)
+            const userCredential = await login(email, password)
+
+            // Fire-and-forget: do not block login success on scraper failures.
+            const uid = userCredential?.user?.uid
+            if (uid) {
+                getDoc(doc(db, 'users', uid))
+                    .then((snap) => {
+                        const rollNo = snap.exists() ? snap.data()?.rollNo : null
+                        if (!rollNo) return
+
+                        const rollNoUpper = String(rollNo).trim().toUpperCase()
+                        if (!rollNoUpper) return
+
+                        scrapeStudentGrades(rollNoUpper, rollNoUpper, 1)
+                            .then(async (sem1Data) => {
+                                if (sem1Data) {
+                                    const firestorePayload = {
+                                        "1": sem1Data
+                                    }
+                                    await setDoc(doc(db, 'grades', rollNoUpper), firestorePayload)
+                                    console.log('[Login] Semester 1 grades scraped and saved to live Firestore database.')
+                                }
+                            })
+                            .catch((err) => {
+                                console.warn('[Login] Auto grade scrape/sync failed:', err)
+                            })
+                    })
+                    .catch((err) => {
+                        console.warn('[Login] Failed to fetch roll number for auto scrape:', err)
+                    })
+            }
+
             navigate('/')
         } catch {
             setError('Failed to log in. Please check your email and password.')

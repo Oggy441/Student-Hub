@@ -7,29 +7,92 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+cypress/videos/
+cypress/screenshots/
+.nyc_output
+
+# Production / Build
+dist/
+dist-ssr/
+build/
 *.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Environment variables
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
 .env.vercel
 
-# Firebase
+# Vercel
+.vercel/
+
+# Capacitor & Android
+# Standard artifacts are usually ignored by android/.gitignore, 
+# but adding these for extra safety at root.
+android/app/build/
+android/.gradle/
+android/local.properties
 android/app/google-services.json
+
+# Editor / IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project Specific (Security & Data)
+server/credentials.csv
+data/grades_*.json
+data/*.tmp
+
+# Scraper Utility
+server/gradeScraper.js
+server/gradeScraperServer.js
+server/saveGrades.js
+server/testScraper.js
+local-api-server.js
+
+# Firebase & Services
+src/services/firebase.js
+
+# Secrets, Keys & Security
+*.key
+*.pem
+*.p12
+*.pfx
+*.asc
+*.jks
+*.keystore
+*secret*
+*password*
+*credentials*
+# Explicitly ignore files that might contain secrets
+secrets.txt
+passwords.txt
+auth.json
+service-account.json
+firebase-key.json
+jwt-secret.txt
+
+
+
 

@@ -4,6 +4,7 @@ import Navigation from './components/shared/Navigation'
 import HomePage from './components/home/HomePage'
 import NotesPage from './components/notes/NotesPage'
 import SchedulePage from './components/schedule/SchedulePage'
+import GradesPage from './components/grades/GradesPage'
 import SettingsPage from './components/settings/SettingsPage'
 import LoginPage from './components/auth/LoginPage'
 import SignupPage from './components/auth/SignupPage'
@@ -35,13 +36,11 @@ function AppContent() {
                 <NotesPage />
               </PrivateRoute>
             } />
-            {/* 
             <Route path="/grades" element={
               <PrivateRoute>
                 <GradesPage />
               </PrivateRoute>
             } />
-            */}
             <Route path="/schedule" element={
               <PrivateRoute>
                 <SchedulePage />

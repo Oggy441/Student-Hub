@@ -1,38 +1,43 @@
-{
-  "name": "student-app",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build-android": "vite build && npx cap sync && cd android && gradlew.bat assembleDebug",
-    "install-apk": "C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r android\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
-    "deploy": "npm run build-android && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell am force-stop com.oggy441.studenthub && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell pm clear com.oggy441.studenthub && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r android\\app\\build\\outputs\\apk\\debug\\app-debug.apk && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell monkey -p com.oggy441.studenthub -c android.intent.category.LAUNCHER 1",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@capacitor/android": "^8.1.0",
-    "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.1.0",
-    "@google/generative-ai": "^0.24.1",
-    "firebase": "^12.9.0",
-    "groq": "^3.99.0",
-    "pdfjs-dist": "^5.4.624",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router-dom": "^7.13.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "vite": "^7.3.1"
+  {
+    "name": "student-app",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "build-android": "vite build && npx cap sync && cd android && gradlew.bat assembleDebug",
+      "install-apk": "C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r android\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+      "deploy": "npm run build-android && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell am force-stop com.oggy441.studenthub && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell pm clear com.oggy441.studenthub && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r android\\app\\build\\outputs\\apk\\debug\\app-debug.apk && C:\\Users\\neera\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell monkey -p com.oggy441.studenthub -c android.intent.category.LAUNCHER 1",
+      "lint": "eslint .",
+      "preview": "vite preview",
+      "scraper": "node server/gradeScraperServer.js",
+      "test-scraper": "node server/testScraper.js"
+    },
+    "dependencies": {
+      "@capacitor/android": "^8.1.0",
+      "@capacitor/cli": "^8.1.0",
+      "@capacitor/core": "^8.1.0",
+      "@google/generative-ai": "^0.24.1",
+      "cors": "^2.8.6",
+      "express": "^5.2.1",
+      "firebase": "^12.9.0",
+      "groq": "^3.99.0",
+      "pdfjs-dist": "^5.4.624",
+      "puppeteer": "^24.40.0",
+      "react": "^19.2.0",
+      "react-dom": "^19.2.0",
+      "react-router-dom": "^7.13.0"
+    },
+    "devDependencies": {
+      "@eslint/js": "^9.39.1",
+      "@types/react": "^19.2.7",
+      "@types/react-dom": "^19.2.3",
+      "@vitejs/plugin-react": "^5.1.1",
+      "eslint": "^9.39.1",
+      "eslint-plugin-react-hooks": "^7.0.1",
+      "eslint-plugin-react-refresh": "^0.4.24",
+      "globals": "^16.5.0",
+      "vite": "^7.3.1"
+    }
   }
-}

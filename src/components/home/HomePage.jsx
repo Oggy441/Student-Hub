@@ -6,6 +6,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { getUpcomingClasses, SUBJECT_COLORS } from '../../data/scheduleData'
 import { syncScheduleWithWidget } from '../../utils/widgetSync'
+import { getHomeGradeCards } from '../../services/gradesDataService'
 import DailyQuote from './DailyQuote'
 import './HomePage.css'
 
@@ -23,23 +24,7 @@ function getDisplayTitle(cls) {
     return cls.topic
 }
 
-const FALLBACK_GRADES = [
-    { subject: 'Calc', full: 'Calculus', grade: 'B+' },
-    { subject: 'Pro Comm', full: 'Professional Communication', grade: 'B' },
-    { subject: 'Pro Comm (P)', full: 'Professional Communication (P)', grade: 'B+' },
-    { subject: 'Prog Fund', full: 'Programming Fundamentals', grade: 'C+' },
-    { subject: 'Prog Fund (P)', full: 'Programming Fundamentals (P)', grade: 'B+' },
-    { subject: 'Quantum', full: 'Quantum Physics', grade: 'B' },
-    { subject: 'Quantum (P)', full: 'Quantum Physics (P)', grade: 'B+' },
-    { subject: 'UHV-II', full: 'Universal Human Values-II', grade: 'C+' },
-    { subject: 'Workshop', full: 'Workshop (P)', grade: 'A+' },
-]
-
-const STUDENT_GRADES = {
-    // Map grades with roll number to display them
-    // Example:
-    // '24B1001': FALLBACK_GRADES
-}
+// Grades are now loaded from scraped JSON files in /data via gradesDataService
 
 function HomePage() {
     const { isDark, toggleTheme } = useTheme()
@@ -156,35 +141,26 @@ function HomePage() {
     }
 
     const userRollNo = (userProfile?.rollNo || '').toUpperCase()
-    const [fetchedGrades, setFetchedGrades] = useState([])
 
-    // Fetch grades mapped by roll no from 'grades' collection
+    // Load grades dynamically from Firestore (with local fallback)
+    const [grades, setGrades] = useState([])
+    
     useEffect(() => {
         if (!userRollNo) return
         let cancelled = false
         async function fetchGrades() {
             try {
-                const snap = await getDoc(doc(db, 'grades', userRollNo))
-                if (!cancelled && snap.exists() && snap.data().grades) {
-                    setFetchedGrades(snap.data().grades)
+                const result = await getHomeGradeCards(userRollNo, 1)
+                if (!cancelled && result) {
+                    setGrades(result)
                 }
             } catch (err) {
-                console.error('Failed to fetch grades by roll no:', err)
+                console.error('Failed to load home grades:', err)
             }
         }
         fetchGrades()
         return () => { cancelled = true }
     }, [userRollNo])
-
-    // Filter out the old fallback grades that were mistakenly saved for everyone
-    // The fallback grades actually legitimately belong to CO25343
-    const isFallbackBug = userRollNo !== 'CO25343' && userProfile?.grades?.length === 9 && userProfile.grades[0]?.subject === 'Calc'
-    const profileGrades = (userProfile?.grades?.length && !isFallbackBug) ? userProfile.grades : []
-
-    // Priority: Grades Collection > User Profile > Local Mapping
-    const grades = fetchedGrades.length > 0 ? fetchedGrades :
-        (profileGrades.length > 0 ? profileGrades :
-            (STUDENT_GRADES[userRollNo] || []))
 
     return (
         <div className="page home-page">

@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../../services/firebase'
 import { useAuth } from '../../context/AuthContext'
+import { scrapeStudentGrades } from '../../services/gradeScraperService'
 import './Auth.css'
 
 function SignupPage() {
@@ -9,6 +12,7 @@ function SignupPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [agreedToTerms, setAgreedToTerms] = useState(false)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const { signup } = useAuth()
@@ -16,6 +20,10 @@ function SignupPage() {
 
     async function handleSubmit(e) {
         e.preventDefault()
+
+        if (!agreedToTerms) {
+            return setError('You must agree to the Terms of Service to create an account.')
+        }
 
         if (password !== confirmPassword) {
             return setError('Passwords do not match')
@@ -25,6 +33,26 @@ function SignupPage() {
             setError('')
             setLoading(true)
             await signup(email, password, name, rollNo)
+
+            // Fire-and-forget: account creation should succeed even if scraping fails.
+            if (rollNo?.trim()) {
+                const rollNoUpper = rollNo.trim().toUpperCase()
+                scrapeStudentGrades(rollNoUpper, rollNoUpper, 1)
+                    .then(async (sem1Data) => {
+                        if (sem1Data) {
+                            // Map the data to Semester 1 key for exactly the structure Firestore expects
+                            const firestorePayload = {
+                                "1": sem1Data
+                            }
+                            await setDoc(doc(db, 'grades', rollNoUpper), firestorePayload)
+                            console.log('[Signup] Semester 1 grades scraped and saved to live Firestore database.')
+                        }
+                    })
+                    .catch((err) => {
+                        console.warn('[Signup] Auto grade scrape/sync failed:', err)
+                    })
+            }
+
             navigate('/')
         } catch (err) {
             console.error('Signup error:', err)
@@ -112,7 +140,20 @@ function SignupPage() {
                         />
                     </div>
 
-                    <button disabled={loading} className="btn btn-primary btn-full" type="submit">
+                    <div className="form-group checkbox-group" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: '12px', marginTop: '8px' }}>
+                        <input
+                            type="checkbox"
+                            id="terms"
+                            checked={agreedToTerms}
+                            onChange={(e) => setAgreedToTerms(e.target.checked)}
+                            style={{ marginTop: '4px', width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+                        />
+                        <label htmlFor="terms" style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', lineHeight: 1.4 }}>
+                            I agree to the Terms of Service and Privacy Policy. I explicitly consent to allowing Student Hub to connect to the initial eAkadamik portal on my behalf to securely sync my academic grades and attendance.
+                        </label>
+                    </div>
+
+                    <button disabled={loading || !agreedToTerms} className="btn btn-primary btn-full" type="submit" style={{ marginTop: '12px' }}>
                         {loading ? 'Creating Account...' : 'Sign Up'}
                     </button>
                 </form>
